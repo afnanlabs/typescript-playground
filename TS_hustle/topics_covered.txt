@@ -1,0 +1,91 @@
+# TypeScript Journey
+
+According to my personalise roadmap
+
+1. The Core Syntax Foundations
+   ✅ 🟢 Variables & Constants — [00:25:13]
+   ✅ 🟢 Type Annotations — [00:16:24]
+   ✅ 🟢 Arrays — [01:15:20]
+   ✅ 🟢 Typed Collections (Array, Set, Record) — [01:15:20] &
+   ✅ 🟡 Readonly Arrays — [01:15:20]
+   ✅ 🟢 Objects — [00:37:20]
+   ✅ 🟢 Functions — [01:28:59]
+   ✅ 🟢 Arrow Functions — [01:28:59]
+   ✅ 🟢 Function Return Types — [01:28:59]
+   ✅ 🟢 Optional Properties — [01:35:20]
+   ✅ 🟢 Imports & Exports — [05:26:18] (Demonstrated via the modular project breakdown)
+
+2. Advanced Type Structuring
+   ✅ 🟢 Interfaces — [01:54:27]
+   ✅ 🟡 Interface Extension (extends) — [01:54:27]
+   ✅ 🟢 Type Aliases (type) — [02:01:35]
+   ✅ 🟢 Union Types — [01:00:00]
+   ✅ 🟢 String Literal Union Types — [01:00:00]
+   ✅ ⚪ Intersection Types (&) — [01:08:42]
+   ✅ ⚪ Structural Typing — [02:17:57] (Explained via compiler behavior checks)
+
+3. Execution Control & Defending Runtime
+   ✅ 🟢 Control Flow Narrowing — [02:17:57]
+   ✅ ⚪ typeof Type Queries — [02:17:57]
+   ✅ 🟢 User-Defined Type Guards — [02:17:57]
+   ✅ 🟡 Type Predicates (x is Y) — [02:17:57]
+   ✅ 🟢 unknown — [00:50:58] (Covered right alongside Type Assertions)
+   ✅ 🟡 Type Assertions (as) — [00:50:58]
+   ✅ 🟡 JSON Storage / Serialization — [00:50:58] (Demonstrated using type assertions on dynamic data)
+   ✅ 🟡 Runtime Validation — [02:17:57]
+   ✅ 🟢 Generics (Usage) — [02:40:52]
+   ✅ 🟡 Utility Types (Record, Partial) — [03:07:30]
+   ✅ 🟢 Async / Await — [03:40:20]
+   ✅ 🟢 Promises — [03:40:20]
+   ✅ 🟢 Optional Chaining (?.) — [02:17:57]
+
+4. Object-Oriented Programming & Workspace Settings
+   ✅ 🟢 Classes — [03:46:40]
+   ✅ 🟢 Access Modifiers (private, readonly) — [03:51:20]
+   ✅ 🟡 Constructor Parameter Properties — [03:51:20]
+   ✅ 🟡 Encapsulation — [03:59:55]
+   ✅ 🟢 Strict Mode — [00:08:35] (Setting "strict": true in tsconfig.json)
+   ✅ 🟢 Null Safety (strictNullChecks) — [00:08:35] (Handled natively by activating strict engine configurations) \*
+
+/_ Topics Covered by tutor
+Core Types & Inference
+Unions & Intersections
+Array & Tuples
+Functions & Call Signatures
+Objects, Interfaces & Type Alliases
+Narrowing & Control Flow
+Generic Made Practical
+Built-in Utility Types
+Classes & OOP Concepts
+React + TypeScript
+_/
+
+\_
+Block 1: The Foundations & Core Shapes
+Video Range: 00:00 to 01:15:20 (Approx. 1 hour 15 mins)
+Timestamps Covered: Introduction up to Intersections.
+What you learn: Environment setup, Type Inference, Primitives, Objects, Literals, Assertions, as const, Unions, and Intersections.
+The Goal: Understanding how to explicitly and implicitly type individual variables and mixed data shapes.
+Hands-on Pause: Stop here. Open your TS_hustle project and write out an object representing a user that combines string literal unions and intersections. Run it with npm run dev to see it compile.
+
+Block 2: Collections, Functions & Contracts
+Video Range: 01:15:20 to 02:40:52 (Approx. 1 hour 25 mins)
+Timestamps Covered: Array basics up to Control Flow Narrowing (typeof, instanceof, in operator).
+What you learn: Arrays, Read-only Arrays, Tuples, Function Parameters/Return Types, Interfaces vs. Type Aliases, Index Signatures, and Type Narrowing.
+The Goal: Mastering structural typing contracts (Interfaces/Types), data sets, and forcing code paths safely through narrowing.
+Hands-on Pause: Stop here. Build a functional calculator or a mini data filter system that accepts interfaces, uses tuples, and runs narrow checks to handle dynamic inputs safely.
+
+Block 3: Advanced Architecture & Classes
+Video Range: 02:40:52 to 04:04:33 (Approx. 1 hour 24 mins)
+Timestamps Covered: Generics 101 up to Classes, OOP, and Access Modifiers.
+What you learn: Generics (Constraints, Properties), Built-in Utility Types (Partial, Record, etc.), Promises/Awaited utilities, and Object-Oriented Classes (Private, Public, Protected, Getters/Setters).
+The Goal: Learning reusable, abstract engineering (Generics) and encapsulating application state safely using proper OOP structures.
+Hands-on Pause: Stop here. Build a generic data repository class using private access modifiers and constructor parameter properties. Make it fetch dummy promise data.
+
+Block 4: Scaling into React + TypeScript
+Video Range: 04:04:33 to END (Approx. 1 hour 25 mins)
+Timestamps Covered: React Vite setup to Context & useContext.
+What you learn: Typing React Component Props (Children, ReactNode), typing component useState/useReducer hooks, handling synthetic DOM Form Events, and global Context safety.
+The Goal: Merging static type safety seamlessly with dynamic UI frameworks
+Hands-on Pause: Build a mini full-stack mock dashboard feature—like a dashboard list tracker or a context-driven settings pane—where every prop, event handler, and state hook is perfectly typed.
+\_/
