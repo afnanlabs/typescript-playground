@@ -1,0 +1,17 @@
+Q. What is TypeScript?
+TypeScript is an open source langaufe and is a superset of JavaScript
+
+- Offers additional features to JavaScript including static types
+- Using types is complete optional
+- Compiles down to regular JS
+- Can be used for Front-end JS as well as backend with Node.js
+- Includes most features ES6, ES7 (classess, arrow fucntion, etc)
+- Types from 3rd party libraries can be added with type definitions
+
+Q. Dynamic VS Static Typing
+In dynamically types languages, teh types are associated with run-time values and note named explicitly in your code.
+
+In statically types languages, you explicitly assign types to vairbales, function parameters, return values, etc.
+
+Static Exmaple : Jva, C,C++, Rust, Go
+Dynamic Examples: JavaScript, Python, Ruby, PHP
