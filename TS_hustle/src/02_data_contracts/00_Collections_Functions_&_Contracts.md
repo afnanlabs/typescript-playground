@@ -4,7 +4,14 @@ Video Range: 01:15:20 to 02:40:52 (Approx. 1 hour 25 mins)
 
 Timestamps Covered: Array basics up to Control Flow Narrowing (typeof, instanceof, in operator).
 
-What you learn: Arrays, Read-only Arrays, Tuples, Function Parameters/Return Types, Interfaces vs. Type Aliases, Index Signatures, and Type Narrowing.
+What you learn:
+Arrays ✅
+Read-only Arrays ✅
+Tuples ✅
+Function Parameters/Return Types ✅
+Interfaces vs. Type Aliases ✅
+Index Signatures
+Type Narrowing.
 
 The Goal: Mastering structural typing contracts (Interfaces/Types), data sets, and forcing code paths safely through narrowing.
 
