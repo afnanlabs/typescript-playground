@@ -4,12 +4,12 @@ Video Range: 01:15:20 to 02:40:52 (Approx. 1 hour 25 mins)
 
 Timestamps Covered: Array basics up to Control Flow Narrowing (typeof, instanceof, in operator).
 
-What you learn:
+What you learn:s
 Arrays ✅
 Read-only Arrays ✅
 Tuples ✅
 Function Parameters/Return Types ✅
-Interfaces vs. Type Aliases ✅
+Interfaces vs Type Aliases ✅
 Index Signatures
 Type Narrowing.
 
