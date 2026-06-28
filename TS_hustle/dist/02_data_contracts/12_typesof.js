@@ -48,3 +48,4 @@ function info(z) {
 }
 console.log(info([1, 2, 3, 4, 5, 6]), info(new Date()), info(new Error("oopps! Error occured")), info({ x: 1 }));
 export {};
+// Done

@@ -76,3 +76,5 @@ console.log(
   info(new Error("oopps! Error occured")),
   info({ x: 1 }),
 );
+
+// Done
