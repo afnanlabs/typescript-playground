@@ -10,8 +10,8 @@ Read-only Arrays ✅
 Tuples ✅
 Function Parameters/Return Types ✅
 Interfaces vs Type Aliases ✅
-Index Signatures
-Type Narrowing.
+Index Signatures ✅
+Type Narrowing. ✅
 
 The Goal: Mastering structural typing contracts (Interfaces/Types), data sets, and forcing code paths safely through narrowing.
 
