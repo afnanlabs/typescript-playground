@@ -1,20 +1,26 @@
-// Prmoise<T>
-// nested Promise<Promise<T>
-// Thenables -> .then
+// GOAL: Master async type unwrapping using 'Awaited<T>' to extract synchronous payloads from Promises and deep Thenables.
 
-// Awaited<T>
+// 1. Basic & Deep Unwrapping Operations
 
-type Promise1 = Awaited<Promise<number>>; // This will return a number
-type Promise2 = Awaited<Promise<string>>; // This will return a string
+type Promise1 = Awaited<Promise<number>>; // Evaluates to: number
+type Promise2 = Awaited<Promise<string>>; // Evaluates to: string
 
-type Awaited1 = Awaited<string>; // this is just a string but not a promise
+// If passed a non-promise primitive, it cleanly evaluates directly to that type
+type Awaited1 = Awaited<string>; // Evaluates to: string
 
-type PrmoiseUnionExample = Awaited<Promise<string | number>>;
+// Handles complex unions inside async shells effortlessly
+type PromiseUnionExample = Awaited<Promise<string | number>>; // Evaluates to: string | number
+
+// 2. Real-World API Data Payload Capture
+
 async function fetchCount() {
   return 42 as const;
 }
 
+// Drops the Promise wrapping and extracts the literal value type '42'
 type ResolvedFetchedCountValue = Awaited<ReturnType<typeof fetchCount>>;
+
+// 3. Destructuring Complex Concurrent Async Tasks
 
 async function getData() {
   return Promise.all([
@@ -23,4 +29,8 @@ async function getData() {
   ] as const);
 }
 
+// Resolves a strict, immutable runtime readonly tuple: readonly [1, "x"]
 type DataTupleWithPromise = Awaited<ReturnType<typeof getData>>;
+
+const samplePayload: DataTupleWithPromise = [1, "x"];
+console.log("Async Data Tuple Payload:", samplePayload);
