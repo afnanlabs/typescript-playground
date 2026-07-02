@@ -47,9 +47,9 @@ tsc -w
 
 ## 📂 Project Tree Structure
 
-🟢 = Mandatory (must know, used constantly in real projects)
-🟡 = Important (learn after the mandatory ones)
-⚪ = Optional / Advanced (useful but not essential early on)
+- 🟢 = Mandatory (must know, used constantly in real projects)
+- 🟡 = Important (learn after the mandatory ones)
+- ⚪ = Optional / Advanced (useful but not essential early on)
 
 ```text
 _typescript-playground/TShustle/
