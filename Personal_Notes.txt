@@ -34,3 +34,51 @@ Important Tier - HighValue for Backend Dev
 
 Optional / Advanced Tier - Learn when needed
 1. Mapped Types & Conditional Types
+
+
+Topics Covered : 
+
+What is typescript
+Inference
+Primitives
+Special types
+Objects
+Literals
+Assertions
+As const
+Unions
+Intersections
+Array basics
+Read only arrays
+Tuples
+Param annotations
+Optional and defaults
+Rest tuples
+Return types
+Interface basics
+Type aliases
+Interfaces vs types
+Index signatures
+Typeof date, instanceof etc
+In operator and optional nullish
+Generics 101
+Generics constraints
+Generics get prop
+Utils
+Function utils
+Union helpers
+Awaited utils & promises
+Classes constuctors
+Access modifiers - private and public
+Access modifiers protected
+Getters and setters
+Import & Export
+unknown Type
+Control FLow Narrowing & Type Guards
+Async/Await & Promises
+Type Predicates
+Runtime Validation (Zod)
+Constructor Parameter Properties (The Shorthand)
+Enums & Abstract Classes 
+Mapped Types & Conditional Types
+
