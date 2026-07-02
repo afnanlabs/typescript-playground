@@ -15,3 +15,22 @@ In statically types languages, you explicitly assign types to vairbales, functio
 
 Static Exmaple : Jva, C,C++, Rust, Go
 Dynamic Examples: JavaScript, Python, Ruby, PHP
+
+....
+
+The Missing Topics - What needs separate attention?
+
+Mandatory Tier - MustKnow
+1. Import & Export - Block 1
+2. unknown Type - Block 1
+3. Control FLow Narrowing & Type Guards - Block 2
+4. Async/Await & Promises - Block 3
+
+Important Tier - HighValue for Backend Dev
+1. Type Predicates - Block 2
+2. Runtime Validation (Zod) - Block 3
+3. Constructor Parameter Properties (The Shorthand) - Block 3
+4. Enums & Abstract Classes - Block 3
+
+Optional / Advanced Tier - Learn when needed
+1. Mapped Types & Conditional Types
