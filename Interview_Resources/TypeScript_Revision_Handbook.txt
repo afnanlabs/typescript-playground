@@ -1,0 +1,1992 @@
+================================================================================
+TYPESCRIPT INTERVIEW HANDBOOK
+A Practical Revision Guide for Full Stack / Frontend Interviews
+================================================================================
+
+How to use this handbook:
+- This is NOT a TypeScript course. It assumes you already know the language.
+- Each topic contains only the questions interviewers actually ask.
+- Read top to bottom once, then skim again before your interview.
+
+================================================================================
+
+TOPIC 1: WHAT IS TYPESCRIPT
+--------------------------------------------------------------------------------
+
+Q1. What is TypeScript and why would you use it over plain JavaScript?
+Answer: TypeScript is a superset of JavaScript that adds static typing. It compiles
+down to plain JS, so it runs anywhere JS runs. The main value is catching type
+errors at compile time instead of runtime, better editor autocomplete, safer
+refactors, and self-documenting code through types. It doesn't add new runtime
+behavior -- it's purely a development-time tool that gets erased during compilation.
+Follow-up Questions: Does TypeScript improve runtime performance? Can TypeScript
+catch every bug?
+Interview Tip: Emphasize "compile-time safety, zero runtime cost" -- interviewers
+want to hear that you understand types are erased, not enforced at runtime.
+
+Q2. Is TypeScript compiled or interpreted?
+Answer: TypeScript is transpiled to JavaScript using the TypeScript compiler (tsc)
+or a tool like esbuild/swc, and the resulting JS is what actually runs in the
+browser or Node. TypeScript itself has no runtime -- there's no "TS engine."
+Type information is stripped away entirely at build time.
+Follow-up Questions: What happens if you try to check a TS-only type at runtime?
+Interview Tip: Mention this is why you can't do `if (x instanceof SomeInterface)`
+-- interfaces don't exist after compilation.
+
+Q3. What problems does TypeScript NOT solve?
+Answer: TypeScript doesn't prevent runtime errors from bad data (like malformed
+API responses), doesn't enforce types across a network boundary, doesn't improve
+performance, and can be bypassed with `any` or type assertions. It's a tool for
+catching mistakes early in development, not a guarantee of correctness.
+Follow-up Questions: How would you validate data coming from an external API?
+Interview Tip: This is a great place to segue into mentioning Zod or runtime
+validation if asked -- shows you understand the type-safety boundary.
+
+
+TOPIC 2: INFERENCE
+--------------------------------------------------------------------------------
+
+Q1. What is type inference in TypeScript?
+Answer: Type inference is TypeScript's ability to automatically determine a
+variable's type based on its initial value, without an explicit annotation.
+For example, `let x = 5` infers `x` as `number`. This reduces boilerplate while
+keeping type safety, since TypeScript still enforces the inferred type afterward.
+Simple Example: `let name = "Afnan"; // inferred as string`
+Follow-up Questions: When does TypeScript widen a literal type during inference?
+Interview Tip: Say "TypeScript infers, it doesn't guess" -- it's based on the
+actual assigned value's shape, not magic.
+
+Q2. What is contextual typing?
+Answer: Contextual typing is when TypeScript infers a type based on the location
+where a value is used, rather than the value itself. A classic example is
+callback parameters: in `arr.forEach(item => ...)`, `item`'s type is inferred
+from the array's element type, not from the arrow function alone.
+Simple Example: `[1,2,3].forEach(n => n.toFixed(2)); // n inferred as number`
+Follow-up Questions: What happens if you extract that callback into a standalone
+function? Why does the parameter become `any` or throw an error?
+Interview Tip: This "extract the function and lose context" gotcha is a common
+follow-up -- know that context comes from usage position, not the function itself.
+
+Q3. What is best common type inference for arrays?
+Answer: When you create an array of mixed literal values, TypeScript infers
+a union type covering all elements' types. For example `[1, "two", 3]` infers
+`(string | number)[]`. TypeScript picks the most general shared type it can find.
+Simple Example: `const arr = [1, "a"]; // (string | number)[]`
+Follow-up Questions: How would you force a tuple type instead of an array type?
+Interview Tip: Mention `as const` here to preempt the follow-up.
+
+Q4. How does return type inference work for functions?
+Answer: If you don't annotate a function's return type, TypeScript infers it
+from the `return` statements in the function body. This is convenient, but for
+public APIs (exported functions), explicit return types are best practice
+because they act as documentation and prevent accidental type changes when
+the implementation changes.
+Follow-up Questions: Why do teams enforce explicit return types via ESLint on
+exported functions but not internal helpers?
+Interview Tip: Bring up the "accidental breaking change" scenario -- editing an
+internal implementation detail silently changes a public contract.
+
+Q5. What is "type widening" and how does `const` vs `let` affect it?
+Answer: Widening is when TypeScript generalizes a specific literal type to its
+broader type. With `let x = "a"`, TypeScript widens to `string` because the
+value can change. With `const x = "a"`, TypeScript keeps the narrow literal
+type `"a"` because it can never be reassigned.
+Simple Example: `let a = "hi"; // string` vs `const b = "hi"; // "hi"`
+Follow-up Questions: Why does this matter for object literals even when declared
+with `const`?
+Interview Tip: Segue naturally into `as const` -- interviewers often chain
+Inference and as const questions together.
+
+TOPIC 3: PRIMITIVES
+--------------------------------------------------------------------------------
+
+Q1. What are the primitive types in TypeScript?
+Answer: string, number, boolean, null, undefined, symbol, and bigint. These
+map directly to JavaScript's primitive types -- TypeScript doesn't invent new
+runtime primitives, it just adds static type annotations for the existing ones.
+Follow-up Questions: Is `null` assignable to `string` by default?
+Interview Tip: Keep this answer short -- it's a warm-up question, not a deep one.
+
+Q2. What's the difference between `String` and `string`?
+Answer: Lowercase `string` is the primitive type used for actual string values.
+Uppercase `String` is the wrapper object type from JavaScript's built-in
+`String` constructor. You should almost always use the lowercase primitive
+types (`string`, `number`, `boolean`) -- the capitalized versions refer to
+object wrappers that behave differently and are rarely what you want.
+Follow-up Questions: Why does TypeScript even allow the capitalized versions?
+Interview Tip: A quick, confident "always lowercase" answer signals real-world
+experience -- this trips up a lot of self-taught developers.
+
+Q3. How does TypeScript handle `null` and `undefined` by default?
+Answer: With `strictNullChecks` enabled (default in strict mode), `null` and
+`undefined` are NOT assignable to other types unless explicitly included in a
+union, e.g. `string | null`. Without strict mode, they're assignable to
+anything, which defeats a huge part of TypeScript's safety value.
+Follow-up Questions: What real bugs does `strictNullChecks` prevent?
+Interview Tip: Always assume strict mode is on unless told otherwise --
+interviewers expect strict-mode-aware answers by default in 2026.
+
+TOPIC 4: SPECIAL TYPES
+--------------------------------------------------------------------------------
+
+Q1. What is the difference between `any` and `unknown`?
+Answer: `any` disables type checking entirely -- you can call any method or
+access any property on it with no errors, and it defeats the purpose of using
+TypeScript. `unknown` is type-safe: you can assign anything to it, but you
+must narrow it (via a type guard or assertion) before you can use it. `unknown`
+is the "safe any" for genuinely unknown data like API responses.
+Simple Example: `let a: unknown = fetchData(); if (typeof a === "string") { a.toUpperCase(); }`
+Follow-up Questions: When would `any` still be acceptable in production code?
+Interview Tip: This is one of the most-asked TS interview questions -- have a
+crisp, confident answer ready without hesitation.
+
+Q2. What is `void` and how is it different from `undefined`?
+Answer: `void` is used as a return type to indicate a function doesn't return
+a meaningful value. It's a broader concept than `undefined` -- a function typed
+to return `void` can technically return any value in JS (the caller just
+shouldn't use it), which matters for callback type compatibility.
+Follow-up Questions: Why does `Array.prototype.push`'s callback type accept
+functions that return something other than `void`?
+Interview Tip: Don't overexplain -- most interviewers just want "no meaningful
+return value, mainly used for function return types."
+
+Q3. What is `never` and when do you use it?
+Answer: `never` represents a value that can never occur -- functions that
+always throw, or that have infinite loops, are typed as returning `never`. It's
+also used by the compiler for exhaustiveness checks in switch statements over
+union types, where the `default` case should be typed as `never` to catch
+unhandled cases at compile time.
+Simple Example: `function fail(msg: string): never { throw new Error(msg); }`
+Follow-up Questions: How would you use `never` to enforce exhaustive switch
+handling over a discriminated union?
+Interview Tip: The exhaustiveness-check pattern is a favorite senior-level
+follow-up -- practice writing it once before your interview.
+
+Q4. What is the difference between `null` and `undefined`?
+Answer: `undefined` means a variable has been declared but not assigned a
+value, or a property/parameter is missing. `null` is an explicit, intentional
+assignment representing "no value." In practice, most codebases pick one
+convention (often `undefined` for "not set" and `null` for "intentionally
+empty") and enforce it via linting.
+Follow-up Questions: How do optional properties (`prop?: string`) relate to
+`undefined`?
+Interview Tip: Mention that `prop?: string` is shorthand for
+`prop: string | undefined` -- shows you understand the desugaring.
+
+
+TOPIC 5: OBJECTS
+--------------------------------------------------------------------------------
+
+Q1. How do you type an object in TypeScript?
+Answer: You can use an inline object type, a `type` alias, or an `interface`.
+Each property gets its own type annotation, and properties can be marked
+optional with `?`. Object types are structural -- TypeScript checks shape, not
+name or declaration site.
+Simple Example: `type User = { id: number; name: string; email?: string };`
+Follow-up Questions: What happens if you pass an object with extra properties?
+Interview Tip: This naturally leads into excess property checks -- be ready
+for that follow-up.
+
+Q2. What are excess property checks and when do they trigger?
+Answer: When you assign an object LITERAL directly to a typed variable or
+pass it directly as a function argument, TypeScript checks for extra
+properties not in the target type and errors. This only happens for fresh
+object literals -- if you assign via a variable, the check is skipped because
+the object might be a valid subtype through structural typing.
+Simple Example: `const u: User = { id: 1, name: "A", age: 30 }; // Error: excess property`
+Follow-up Questions: How do you work around a legitimate excess property
+(like extra fields from an API)?
+Interview Tip: Know the workaround: assign to a variable first, or use an
+index signature -- both bypass excess property checks intentionally.
+
+Q3. What is structural typing and how is it different from nominal typing?
+Answer: TypeScript uses structural typing ("duck typing") -- two types are
+compatible if they have the same shape, regardless of their names or where
+they were declared. Nominal typing (used in languages like Java or C#) instead
+checks the explicit type name/declaration. This means in TS, an object doesn't
+need to explicitly implement an interface to satisfy it.
+Simple Example: `interface Point { x: number; y: number } const p = { x: 1, y: 2 }; // valid Point`
+Follow-up Questions: What's a downside of structural typing for accidental
+compatibility between unrelated types?
+Interview Tip: This is a foundational TS concept -- interviewers use it to
+gauge whether you truly understand the type system vs. just using it.
+
+Q4. How do readonly properties work on objects?
+Answer: Marking a property `readonly` prevents reassignment after the object
+is created, enforced at compile time only -- it doesn't freeze the object at
+runtime. It's useful for preventing accidental mutation of config objects,
+props, or state.
+Simple Example: `interface Config { readonly apiUrl: string }`
+Follow-up Questions: How is `readonly` different from `Object.freeze()`?
+Interview Tip: Always clarify "compile-time only" -- a common trap is
+assuming `readonly` gives runtime immutability.
+
+TOPIC 6: LITERALS
+--------------------------------------------------------------------------------
+
+Q1. What are literal types in TypeScript?
+Answer: A literal type restricts a value to one exact value rather than a
+general type. Instead of `string`, you can say a variable must be exactly
+`"success"`. They're most commonly combined with unions to model a fixed set
+of allowed values, similar to enums but lighter weight.
+Simple Example: `type Status = "success" | "error" | "loading";`
+Follow-up Questions: Why are literal unions often preferred over enums?
+Interview Tip: Have an opinion ready -- many teams now prefer literal unions
+over `enum` because they're erased cleanly and behave more predictably.
+
+Q2. How do template literal types work?
+Answer: Template literal types let you build string types using template
+syntax, combining literal strings with unions to generate a set of valid
+string patterns at the type level, similar to JS template strings but for types.
+Simple Example: `type EventName = \`on\${"Click" | "Hover"}\`; // "onClick" | "onHover"`
+Follow-up Questions: Where have you seen template literal types used in
+real-world libraries (like CSS-in-JS or routing)?
+Interview Tip: Mention this is heavily used in strongly-typed routers and
+CSS-in-JS libraries -- shows practical awareness, not just theory.
+
+Q3. Why does a literal type widen when reassigned?
+Answer: If a variable is declared with `let`, TypeScript widens a literal
+value's type to its general primitive type, since the variable could later
+be reassigned to any value of that general type. `const` prevents widening
+because the value is immutable.
+Follow-up Questions: How would you keep a `let` variable narrowly typed?
+Interview Tip: Mention explicit annotation (`let x: "a" = "a"`) as the fix --
+shows you know how to override inference when needed.
+
+TOPIC 7: ASSERTIONS
+--------------------------------------------------------------------------------
+
+Q1. What is a type assertion and how does it differ from type casting?
+Answer: A type assertion (`as Type` or `<Type>value`) tells the compiler to
+treat a value as a specific type without changing its runtime value. Unlike
+casting in languages like Java, it performs no runtime conversion or check --
+it's purely a compile-time instruction that can be unsafe if you're wrong.
+Simple Example: `const el = document.getElementById("app") as HTMLDivElement;`
+Follow-up Questions: What happens at runtime if the assertion is wrong?
+Interview Tip: Emphasize "assertions can lie to the compiler" -- this is the
+key risk interviewers want you to articulate.
+
+Q2. When is it acceptable to use a type assertion?
+Answer: When you have information the compiler doesn't -- for example, you
+know a DOM query will return a specific element type, or you're narrowing
+data you've already validated at runtime. It should never be used to silence
+a legitimate type error without understanding why the error occurred.
+Follow-up Questions: How is asserting different from validating with a
+library like Zod?
+Interview Tip: Tie this back to the `unknown`/Zod discussion if it comes up
+in the same interview -- shows connected thinking across topics.
+
+Q3. What is the double assertion (`as unknown as X`) and why is it risky?
+Answer: TypeScript normally only allows an assertion between types that
+overlap. To force an assertion between unrelated types, you go through
+`unknown` first, which bypasses the compiler's overlap check entirely. It's
+a strong signal that the type is likely wrong somewhere and should be used
+sparingly, usually as a last resort or in test mocks.
+Simple Example: `const fake = {} as unknown as User;`
+Follow-up Questions: Can you think of a legitimate use case, like mocking
+data in tests?
+Interview Tip: Mention test mocking as the most common legitimate use --
+interviewers like a concrete, honest example rather than "never use this."
+
+Q4. What is the non-null assertion operator (`!`)?
+Answer: The `!` operator tells TypeScript to treat a value as non-null and
+non-undefined, even if its type includes those. It performs no runtime check
+-- if the value actually is null/undefined, you'll get a runtime error later,
+just without a compile-time warning.
+Simple Example: `const el = document.getElementById("app")!;`
+Follow-up Questions: How is this different from optional chaining (`?.`)?
+Interview Tip: Contrast clearly: `!` asserts "trust me, it's there," `?.`
+safely handles "it might not be there."
+
+TOPIC 8: AS CONST
+--------------------------------------------------------------------------------
+
+Q1. What does `as const` do?
+Answer: `as const` tells TypeScript to infer the narrowest possible type for
+a value -- object properties become `readonly`, array literals become
+readonly tuples, and string/number literals keep their exact literal type
+instead of widening to `string`/`number`.
+Simple Example: `const colors = ["red", "green"] as const; // readonly ["red", "green"]`
+Follow-up Questions: How does `as const` differ from declaring a variable
+with `const`?
+Interview Tip: Clarify the distinction: `const` prevents reassignment of the
+variable; `as const` deeply narrows and freezes the value's TYPE.
+
+Q2. How is `as const` used to derive a union type from an array?
+Answer: A common pattern is defining an array of allowed values with
+`as const`, then using `typeof arr[number]` to derive a union type from it,
+keeping a single source of truth between the runtime values and the type.
+Simple Example: `const roles = ["admin", "user"] as const;\ntype Role = typeof roles[number]; // "admin" | "user"`
+Follow-up Questions: Why is this preferred over manually maintaining a
+separate union type and array?
+Interview Tip: This exact pattern comes up constantly in real codebases --
+knowing it cold is a strong signal of hands-on experience.
+
+Q3. What's the difference between `as const` and `Object.freeze()`?
+Answer: `as const` is compile-time only -- it affects the type but the object
+is still mutable at runtime. `Object.freeze()` provides actual runtime
+immutability but doesn't change TypeScript's inferred types on its own
+(though combining both gives you compile-time AND runtime safety).
+Follow-up Questions: Would you combine both in production code? When?
+Interview Tip: Mention that combining `Object.freeze(x as const)` is a solid
+pattern for constants that need both guarantees.
+
+
+TOPIC 9: UNIONS
+--------------------------------------------------------------------------------
+
+Q1. What is a union type?
+Answer: A union type allows a value to be one of several specified types,
+written with `|`. TypeScript only lets you access members that are common
+across all types in the union unless you narrow it first.
+Simple Example: `function format(id: string | number) { ... }`
+Follow-up Questions: Why can't you call `.toUpperCase()` directly on a
+`string | number` parameter?
+Interview Tip: This leads directly into narrowing -- expect that as the
+immediate follow-up.
+
+Q2. What is a discriminated union and why is it useful?
+Answer: A discriminated union is a union of object types that share a common
+literal property (the "discriminant" or "tag"), which TypeScript uses to
+narrow the type automatically inside conditionals or switches. It's the
+standard pattern for modeling state machines, API responses, or Redux
+actions safely.
+Simple Example: `type Result = { status: "success"; data: string } | { status: "error"; message: string };`
+Follow-up Questions: How would you handle a new variant added later without
+breaking existing switch statements? (exhaustiveness checking)
+Interview Tip: This is one of the highest-value TS interview topics --
+practice writing a discriminated union and a switch with a `never` default
+case from memory.
+
+Q3. How does narrowing work with unions?
+Answer: Narrowing is TypeScript refining a union type to a more specific type
+within a conditional block, based on runtime checks like `typeof`,
+`instanceof`, `in`, equality checks, or custom type predicates. Once narrowed,
+you get full autocomplete and safety for the specific branch.
+Follow-up Questions: What's the difference between narrowing with `typeof`
+vs `instanceof`?
+Interview Tip: Have one clean example of each ready -- `typeof` for
+primitives, `instanceof` for class instances.
+
+Q4. What happens when you union two object types with overlapping but
+different properties?
+Answer: TypeScript creates a type where only the properties common to all
+members of the union are directly accessible without narrowing. Properties
+unique to one member require narrowing first (e.g., via a discriminant or an
+`in` check) before you can safely access them.
+Follow-up Questions: How would you access a property only present on one
+branch of the union?
+Interview Tip: Bring up the `in` operator as the safe way to check property
+existence across a union without a discriminant.
+
+Q5. Union vs Intersection -- what's the practical difference?
+Answer: A union (`A | B`) means a value can be EITHER type -- fewer
+guaranteed members, more flexibility. An intersection (`A & B`) means a value
+must satisfy BOTH types simultaneously -- combining shapes into one, with
+all members guaranteed present. Unions model "one of," intersections model
+"has all of."
+Follow-up Questions: Can a union and an intersection of the same two types
+ever be equivalent?
+Interview Tip: Keep the mental model simple: union = OR, intersection = AND.
+
+TOPIC 10: INTERSECTIONS
+--------------------------------------------------------------------------------
+
+Q1. What is an intersection type and when would you use one?
+Answer: An intersection type (`A & B`) combines multiple types into one that
+has all the properties of each. It's commonly used to compose smaller,
+reusable types into a larger one, similar to mixins.
+Simple Example: `type Timestamped = { createdAt: Date };\ntype User = { name: string } & Timestamped;`
+Follow-up Questions: How is this different from `interface` extension?
+Interview Tip: Mention that `interface extends` is generally preferred for
+object shapes because it gives clearer error messages; `&` is more general
+and works with any type, including unions and primitives.
+
+Q2. What happens when you intersect two types with a conflicting property
+(e.g. same property name, incompatible types)?
+Answer: TypeScript resolves the property to the intersection of the two
+conflicting types. If they're incompatible primitives (like `string & number`),
+the resulting property type becomes `never`, since no value can satisfy both,
+making the whole object effectively unusable for that property.
+Follow-up Questions: How would you debug a mysteriously "impossible to
+satisfy" type caused by this?
+Interview Tip: This is a favorite gotcha question -- know that conflicting
+primitive intersections resolve to `never`, not an error.
+
+Q3. Can you intersect two function types? What happens?
+Answer: Intersecting function types produces a function that must satisfy
+all the signatures simultaneously through overloading -- calling it will be
+checked against each signature. This is a niche case; more commonly you'd use
+overloads or generics instead of function type intersections.
+Follow-up Questions: When have you actually needed to do this in real code?
+Interview Tip: It's fine to admit this is rare -- honesty about esoteric
+edge cases is better than fabricating a use case.
+
+
+TOPIC 11: ARRAY BASICS
+--------------------------------------------------------------------------------
+
+Q1. What are the two syntaxes for typing arrays in TypeScript?
+Answer: `Type[]` (e.g. `string[]`) and the generic form `Array<Type>` (e.g.
+`Array<string>`). They're functionally identical -- most style guides pick
+one and enforce it via linting. `Array<Type>` is often preferred for complex
+types like unions to avoid parenthesis ambiguity.
+Simple Example: `const names: string[] = ["a", "b"];`
+Follow-up Questions: When would you prefer `Array<Type>` over `Type[]`?
+Interview Tip: Mention readability for complex unions, e.g.
+`Array<string | number>` vs `(string | number)[]`.
+
+Q2. How do you type an array that can hold multiple types?
+Answer: Use a union inside the array type, e.g. `(string | number)[]`. Each
+element can be either type, but you'll need to narrow before calling
+type-specific methods on individual elements.
+Follow-up Questions: How is this different from a tuple with fixed positions?
+Interview Tip: This is a natural bridge into the Tuples topic.
+
+Q3. What's the difference between an array and a tuple at a conceptual level?
+Answer: An array represents an arbitrary-length list of the same type(s).
+A tuple represents a fixed-length list where each position has its own
+specific type. Arrays model "a collection," tuples model "a fixed structure,"
+like a coordinate pair or a function's argument list.
+Follow-up Questions: Where have you used tuples in real code (e.g. React's
+`useState`)?
+Interview Tip: `useState` returning `[value, setter]` is the go-to real-world
+tuple example -- mention it.
+
+TOPIC 12: READONLY ARRAYS
+--------------------------------------------------------------------------------
+
+Q1. What is a `readonly` array and how do you declare one?
+Answer: A `readonly` array prevents mutating methods (`push`, `pop`, `splice`,
+index assignment) at compile time. Declared with `readonly Type[]` or
+`ReadonlyArray<Type>`. It's compile-time only, like other `readonly` usage --
+no runtime enforcement.
+Simple Example: `const nums: readonly number[] = [1, 2, 3]; nums.push(4); // Error`
+Follow-up Questions: Which array methods are still allowed on a readonly array?
+Interview Tip: Mention non-mutating methods like `.map()`, `.filter()`, and
+`.slice()` remain fully usable since they return new arrays.
+
+Q2. Why would you use readonly arrays for function parameters?
+Answer: Accepting a `readonly Type[]` as a parameter communicates and enforces
+that the function won't mutate the caller's array, which is valuable for
+predictable, side-effect-free functions -- especially in React where mutating
+props/state directly causes bugs.
+Follow-up Questions: Does a regular (mutable) array satisfy a `readonly`
+array parameter?
+Interview Tip: Yes -- a mutable array is assignable to a readonly array
+parameter (but not vice versa), since readonly is a weaker guarantee.
+
+TOPIC 13: TUPLES
+--------------------------------------------------------------------------------
+
+Q1. How do you declare and use a tuple type?
+Answer: A tuple is declared as a fixed-length array type with a specific
+type per position, e.g. `[string, number]`. Unlike a regular array, accessing
+out-of-bounds indices or mismatched types at known positions is a type error.
+Simple Example: `let point: [number, number] = [10, 20];`
+Follow-up Questions: What's a real-world case where you'd reach for a tuple
+over an object?
+Interview Tip: Mention `useState` and function overload return signatures as
+concrete, recognizable examples.
+
+Q2. How do you make tuple elements optional or labeled?
+Answer: Optional tuple elements use `?` after the type, and must come after
+required elements, e.g. `[string, number?]`. TypeScript also supports
+labeled tuple elements for readability, e.g. `[x: number, y: number]`, which
+show up in editor hints without changing runtime behavior.
+Simple Example: `type Coord = [x: number, y: number, z?: number];`
+Follow-up Questions: How does labeling improve the developer experience when
+using this type in a function signature?
+Interview Tip: Mention labeled tuples mainly help with function parameter
+tooltips -- purely a DX improvement, no type-level difference.
+
+Q3. What is a readonly tuple and why does `as const` produce one?
+Answer: A readonly tuple prevents both reassigning elements and mutating the
+tuple's length. `as const` on an array literal automatically produces a
+readonly tuple with each element's literal type preserved, which is why it's
+the standard way to derive strict, exact tuple types from array literals.
+Follow-up Questions: How would you convert a readonly tuple back into a
+mutable array type if needed?
+Interview Tip: Mention `[...tuple]` spread creates a new mutable array at
+runtime, or use a mapped type to strip `readonly` at the type level.
+
+Q4. How do variadic tuple types work?
+Answer: Variadic tuples let you combine fixed and spread elements in a tuple
+type using `...`, enabling generic utilities that combine argument lists,
+like typing `Function.prototype.bind` or building typed `concat` functions.
+Simple Example: `type Concat<T extends unknown[], U extends unknown[]> = [...T, ...U];`
+Follow-up Questions: Where does TypeScript's own standard library use this
+pattern?
+Interview Tip: This is advanced -- only worth mentioning in senior-level
+interviews; a basic acknowledgment is fine for mid-level roles.
+
+
+TOPIC 14: PARAMETER ANNOTATIONS
+--------------------------------------------------------------------------------
+
+Q1. Why should function parameters almost always be explicitly typed?
+Answer: Unlike return types, TypeScript cannot infer parameter types from
+usage inside the function body -- an untyped parameter defaults to `any`
+(or is flagged under `noImplicitAny`), silently disabling type checking for
+that value throughout the function. Explicit parameter types are the main
+safety net for function inputs.
+Follow-up Questions: What does `noImplicitAny` do and why is it usually
+enabled in strict mode?
+Interview Tip: Confidently state that unannotated parameters become `any`
+-- this is a very commonly tested fact.
+
+Q2. How do you type a parameter as a callback function?
+Answer: You write out the callback's own signature inline, e.g.
+`(callback: (value: number) => void) => { ... }`. This lets TypeScript check
+both the arguments the callback receives and how its return value is used.
+Simple Example: `function run(cb: (n: number) => void) { cb(5); }`
+Follow-up Questions: How do you type a callback that might return a Promise?
+Interview Tip: Show `(n: number) => void | Promise<void>` as a quick example
+if asked about async callbacks.
+
+TOPIC 15: OPTIONAL & DEFAULT PARAMETERS
+--------------------------------------------------------------------------------
+
+Q1. What's the difference between an optional parameter and a default parameter?
+Answer: An optional parameter (`param?: Type`) may be omitted, and its type
+becomes `Type | undefined` inside the function. A default parameter
+(`param: Type = value`) also may be omitted, but TypeScript infers its type
+from the default value if not explicitly annotated, and the parameter is
+NOT `undefined` inside the function -- it's always assigned a concrete value.
+Simple Example: `function greet(name = "Guest") { ... } // name: string, never undefined`
+Follow-up Questions: Can a parameter be both optional and have a default value?
+Interview Tip: Clarify that default parameters are effectively "optional at
+the call site" but "always defined" inside the function body -- that
+distinction trips people up.
+
+Q2. Where must optional and default parameters be positioned?
+Answer: They must come after all required parameters, since JavaScript
+resolves positional arguments left to right -- you can't have a required
+parameter after an optional/default one.
+Follow-up Questions: How would you work around needing an optional parameter
+before a required one? (using an options object)
+Interview Tip: Mention the "options object" pattern as the standard fix for
+functions with many optional params in any order.
+
+Q3. How do optional properties interact with `strictNullChecks`?
+Answer: An optional property (`prop?: Type`) is equivalent to
+`prop: Type | undefined`, and under `strictNullChecks` you must handle the
+`undefined` case explicitly before using the value -- optional doesn't mean
+"safe to ignore," it means "possibly missing, must be checked."
+Follow-up Questions: What's the difference between `prop?: string` and
+`prop: string | undefined` in an object literal (hint: presence vs value)?
+Interview Tip: Advanced nuance: `prop?: string` allows the key to be entirely
+absent; `prop: string | undefined` requires the key to exist with value
+`undefined`. Mention this only if asked to go deeper.
+
+TOPIC 16: REST TUPLES
+--------------------------------------------------------------------------------
+
+Q1. How do you type rest parameters in a function?
+Answer: Rest parameters collect the remaining arguments into an array, typed
+with `...args: Type[]`. This lets a function accept a variable number of
+arguments while keeping full type safety on each one.
+Simple Example: `function sum(...nums: number[]) { return nums.reduce((a,b)=>a+b, 0); }`
+Follow-up Questions: How would you type a function where the first argument
+has a fixed type and the rest are variable?
+Interview Tip: Combine a fixed parameter with rest: `(first: string, ...rest: number[])`.
+
+Q2. How do rest elements work inside tuple types?
+Answer: A tuple type can include a rest element (`...Type[]`) to represent
+a variable-length trailing (or leading) segment while keeping other positions
+fixed and strongly typed -- useful for modeling function argument lists.
+Simple Example: `type Args = [name: string, ...rest: number[]];`
+Follow-up Questions: Can you have a rest element in the middle of a tuple?
+Interview Tip: No -- only one rest element is allowed, and it must be at the
+end (or you can have fixed elements after it, but not two rest segments).
+
+Q3. Where is this pattern used in real TypeScript libraries?
+Answer: Utility types for currying, function composition, and typings for
+`Function.prototype.bind`/`apply` all rely on variadic rest tuples to
+preserve argument type information across transformations.
+Follow-up Questions: Have you written a generic function type using this
+pattern yourself?
+Interview Tip: If you haven't, it's fine to say so -- this is a "library
+author" level concern more than daily app development.
+
+TOPIC 17: RETURN TYPES
+--------------------------------------------------------------------------------
+
+Q1. Should you explicitly annotate function return types?
+Answer: For internal/local functions, inference is usually fine. For exported
+functions and public APIs, explicit return types are best practice -- they
+act as a contract, prevent accidental signature drift when the
+implementation changes, and make errors surface at the function definition
+rather than at every call site.
+Follow-up Questions: What's a concrete bug explicit return types would have
+caught?
+Interview Tip: Have a short story ready: "I changed an internal branch and
+the inferred return type silently changed, breaking a consumer elsewhere."
+
+Q2. How do you type a function that never returns (throws or infinite loops)?
+Answer: Use `never` as the return type. This lets TypeScript treat calls to
+that function as unreachable code afterward, useful for assertion functions
+and exhaustive error handling.
+Simple Example: `function assertUnreachable(x: never): never { throw new Error("Unhandled: " + x); }`
+Follow-up Questions: How does this combine with discriminated union
+exhaustiveness checks?
+Interview Tip: This ties back directly to the Unions topic -- mention the
+connection to show integrated understanding.
+
+Q3. How do you type a function that returns a Promise?
+Answer: Annotate the return type as `Promise<T>`, where `T` is the resolved
+value's type -- not the Promise itself. For `async` functions, TypeScript
+automatically wraps your `return` type in a `Promise<>`.
+Simple Example: `async function getUser(): Promise<User> { ... }`
+Follow-up Questions: What does an `async` function returning `void` actually
+resolve to?
+Interview Tip: Mention it resolves to `Promise<void>`, and awaiting it gives
+`undefined`.
+
+Q4. What is a type predicate return type used for?
+Answer: A type predicate (`param is Type`) is a special return type for
+functions that tells TypeScript how to narrow a parameter's type based on
+the function's boolean result, used to build custom, reusable type guards.
+Simple Example: `function isString(x: unknown): x is string { return typeof x === "string"; }`
+Follow-up Questions: How is this different from just returning `boolean`?
+Interview Tip: Emphasize that a plain `boolean` return gives no narrowing
+information to the compiler at the call site -- the predicate syntax is what
+enables narrowing.
+
+
+TOPIC 18: INTERFACE BASICS
+--------------------------------------------------------------------------------
+
+Q1. What is an interface and what can it describe?
+Answer: An interface defines the shape of an object -- its properties,
+methods, and their types. It's purely a compile-time construct that disappears
+after transpilation. Interfaces can describe object shapes, function types,
+and be extended or implemented by classes.
+Simple Example: `interface User { id: number; name: string; }`
+Follow-up Questions: Can an interface describe a function type?
+Interview Tip: Yes -- mention `interface Fn { (x: number): number; }` as a
+callable interface if pushed further.
+
+Q2. How does interface extension work?
+Answer: An interface can extend one or more other interfaces using `extends`,
+inheriting all their members and optionally adding more or narrowing existing
+ones (as long as they remain compatible). It's the standard way to compose
+larger object shapes from smaller reusable ones.
+Simple Example: `interface Admin extends User { permissions: string[]; }`
+Follow-up Questions: Can an interface extend a `type` alias?
+Interview Tip: Yes, as long as the type alias resolves to an object type --
+know that boundary isn't as strict as people assume.
+
+Q3. What is declaration merging for interfaces?
+Answer: If you declare the same interface name multiple times, TypeScript
+merges all the declarations into one combined interface with all their
+members. This is unique to interfaces (type aliases can't do this) and is
+commonly used to extend third-party library types, like augmenting Express's
+`Request` object.
+Simple Example: `interface Window { myGlobal: string; } // merges with lib.dom.d.ts's Window`
+Follow-up Questions: Why is this useful for augmenting global types or
+extending third-party library types?
+Interview Tip: This is a strong differentiator question between mid and
+senior candidates -- have the Express `Request` augmentation example ready.
+
+Q4. How do optional and readonly members work in interfaces?
+Answer: `?` marks a property as optional (may be omitted), and `readonly`
+prevents reassignment after object creation -- both are compile-time only
+constraints, identical in behavior to how they work on plain object types.
+Follow-up Questions: Can a method be marked `readonly`?
+Interview Tip: Yes -- `readonly` prevents reassigning the method reference
+itself, not calling it.
+
+Q5. Can an interface be implemented by a class?
+Answer: Yes -- a class uses `implements InterfaceName` to declare it will
+satisfy that shape, and TypeScript checks the class provides all required
+members with compatible types. Unlike `extends` (inheritance), `implements`
+is purely a contract check with no shared implementation.
+Simple Example: `class AdminUser implements Admin { ... }`
+Follow-up Questions: Can a class implement multiple interfaces?
+Interview Tip: Yes -- `class X implements A, B { ... }`, unlike single-class
+inheritance which only allows one `extends`.
+
+TOPIC 19: TYPE ALIASES
+--------------------------------------------------------------------------------
+
+Q1. What is a type alias and what can it describe that an interface cannot?
+Answer: A `type` alias creates a name for any type -- object shapes, unions,
+intersections, primitives, tuples, or mapped/conditional types. Unlike
+interfaces, which only describe object/function shapes, type aliases can
+represent unions and other non-object type expressions.
+Simple Example: `type ID = string | number;`
+Follow-up Questions: Could you rewrite a union type using an interface?
+Interview Tip: No -- interfaces can't represent unions directly; this is the
+clearest practical distinction to lead with.
+
+Q2. Can type aliases be extended like interfaces?
+Answer: Not with `extends`, but you can achieve the same effect using
+intersections (`&`) to combine a type alias with additional properties.
+Simple Example: `type Admin = User & { permissions: string[] };`
+Follow-up Questions: Does this behave identically to interface extension in
+terms of error messages?
+Interview Tip: Mention that intersections tend to produce messier error
+messages on conflicts compared to interface extension -- a practical DX
+nuance interviewers appreciate.
+
+Q3. Do type aliases support declaration merging?
+Answer: No -- unlike interfaces, declaring the same type alias name twice is
+a compile error. This is a deliberate design choice, and it's one of the
+main practical differences used to decide between `type` and `interface`.
+Follow-up Questions: Why might this make interfaces safer for library authors
+who need extensibility?
+Interview Tip: Ties directly into the Interfaces vs Types topic -- keep your
+answer consistent across both.
+
+TOPIC 20: INTERFACES VS TYPES
+--------------------------------------------------------------------------------
+
+Q1. What are the key differences between `interface` and `type`?
+Answer: Interfaces support declaration merging and are generally used for
+object/class shapes with clearer error messages; `type` aliases can represent
+any type (unions, tuples, primitives, mapped/conditional types) but cannot
+be merged. Both support extension (via `extends` or `&`) and both are
+erased at compile time -- performance is identical.
+Follow-up Questions: In practice, which do most teams default to, and why?
+Interview Tip: This is one of THE most commonly asked TS questions -- have a
+tight 45-second answer memorized cold.
+
+Q2. When would you specifically choose `interface` over `type`?
+Answer: When defining object shapes meant to be extended or implemented by
+classes, or when you want declaration merging (e.g. augmenting a third-party
+library's types). Interfaces also tend to give cleaner compiler error
+messages for object shape mismatches.
+Interview Tip: Give a concrete example -- "defining a public API's object
+contract" is a strong answer.
+
+Q3. When would you specifically choose `type` over `interface`?
+Answer: When you need unions, intersections, tuples, mapped types, or
+conditional types -- anything beyond a simple object shape. Also useful for
+naming complex derived types built from `keyof`, `Partial`, or generics.
+Interview Tip: Mention utility-type-heavy code as the clearest use case.
+
+Q4. Is there a meaningful performance difference between `type` and
+`interface`?
+Answer: No runtime performance difference at all -- both are fully erased
+during compilation. There can be very minor compiler performance differences
+in large codebases with deeply nested types, where interfaces are sometimes
+slightly faster to check due to caching, but this is rarely a practical
+concern.
+Follow-up Questions: Have you ever hit a real compiler performance issue
+related to this?
+Interview Tip: Be honest if you haven't -- this is a niche, rarely-relevant
+fact.
+
+Q5. Can you convert freely between `type` and `interface` for a simple
+object shape?
+Answer: Yes, for a basic object shape they're interchangeable -- the choice
+becomes purely stylistic/team convention until you need a union,
+merging, or advanced type operations that only one of them supports.
+Interview Tip: This is a good closing statement for this topic -- shows
+you don't overstate the difference beyond what matters practically.
+
+Q6. What's a common team convention around `type` vs `interface`?
+Answer: A widely adopted convention (also used by TypeScript's own team) is:
+default to `type` for everything, and only reach for `interface` when you
+specifically need declaration merging or class implementation. Other teams
+do the reverse -- default to `interface` for object shapes, `type` for
+everything else. Either is defensible as long as it's applied consistently.
+Interview Tip: Mention you're comfortable following whatever convention a
+team has -- shows pragmatism over dogma.
+
+
+TOPIC 21: INDEX SIGNATURES
+--------------------------------------------------------------------------------
+
+Q1. What is an index signature and when do you use one?
+Answer: An index signature lets you type an object with dynamic/unknown
+property keys, specifying the type for keys and values, e.g. an object used
+as a dictionary or lookup map where key names aren't known ahead of time.
+Simple Example: `interface Dictionary { [key: string]: number; }`
+Follow-up Questions: What key types are allowed in an index signature?
+Interview Tip: Mention only `string`, `number`, and `symbol` are valid index
+signature key types.
+
+Q2. What's the downside of using index signatures too liberally?
+Answer: They weaken type safety by allowing access to ANY key of that type
+without error, even ones that don't exist at runtime, which under
+`strictNullChecks`/`noUncheckedIndexedAccess` can hide potential
+`undefined` bugs. A `Record<K, V>` or a `Map` is often a safer, more precise
+alternative when the key set is actually fixed.
+Follow-up Questions: What does `noUncheckedIndexedAccess` do?
+Interview Tip: Mention this compiler flag adds `| undefined` to index
+signature reads -- forces you to check before use, closing a real safety gap.
+
+Q3. What's the difference between an index signature and `Record<K, V>`?
+Answer: `Record<K, V>` is a utility type built on mapped types, generally
+used when the key type is a known union of literals (like specific string
+keys), giving stricter checking. A raw index signature is more open-ended,
+typically used for `string`/`number` keyed dictionaries where keys are
+genuinely arbitrary.
+Simple Example: `type Scores = Record<"math" | "science", number>;`
+Follow-up Questions: Can `Record` enforce that ALL keys of a union are
+present?
+Interview Tip: Yes -- unlike a plain index signature, `Record` with a
+literal union forces every key to be defined, a subtle but useful
+distinction.
+
+TOPIC 22: TYPEOF / DATE / INSTANCEOF
+--------------------------------------------------------------------------------
+
+Q1. What are the two meanings of `typeof` in TypeScript?
+Answer: In JavaScript expression position, `typeof` returns a runtime string
+describing a value's type. In TypeScript TYPE position, `typeof` extracts the
+static TYPE of a variable or value, letting you derive a type from an
+existing value rather than duplicating it manually.
+Simple Example: `const config = { retries: 3 }; type Config = typeof config;`
+Follow-up Questions: Why is deriving types with `typeof` preferred over
+manually duplicating a type definition?
+Interview Tip: Emphasize "single source of truth" -- avoids the type and
+value drifting apart over time.
+
+Q2. How do you narrow types using `typeof` in a conditional?
+Answer: `typeof value === "string"` (or `"number"`, `"boolean"`, etc.)
+narrows the type within that branch to the matching primitive type. This
+only works reliably for JS primitives -- `typeof` returns `"object"` for
+both `null` and actual objects, so it can't distinguish those.
+Follow-up Questions: How would you narrow between `null` and an object using
+`typeof`?
+Interview Tip: Mention you'd need an additional `value !== null` check
+alongside `typeof value === "object"`.
+
+Q3. How do you narrow using `instanceof`?
+Answer: `instanceof` checks whether an object was created from a specific
+class's prototype chain at runtime, and TypeScript narrows the type
+accordingly within that branch. It only works with actual classes/constructor
+functions -- not with `interface` or `type` shapes, which don't exist at
+runtime.
+Simple Example: `if (error instanceof TypeError) { ... }`
+Follow-up Questions: Why doesn't `instanceof` work with interfaces?
+Interview Tip: Reinforce the recurring theme: interfaces are erased, classes
+are not.
+
+Q4. How do you correctly type and work with `Date` objects?
+Answer: `Date` is a built-in class, typed simply as `Date`. Common gotchas:
+comparing dates with `===` compares references not values (use
+`.getTime()`); `new Date(invalidString)` produces an "Invalid Date" object
+rather than throwing, so validate before trusting it; and TypeScript doesn't
+distinguish a valid vs invalid `Date` at the type level.
+Follow-up Questions: How would you check if a `Date` object is valid?
+Interview Tip: Know the idiom: `isNaN(date.getTime())` to detect an Invalid
+Date -- a classic real-world gotcha interviewers like testing.
+
+TOPIC 23: IN OPERATOR & OPTIONAL NULLISH
+--------------------------------------------------------------------------------
+
+Q1. How does the `in` operator work for type narrowing?
+Answer: `"property" in obj` checks whether a property exists on an object at
+runtime, and TypeScript uses this to narrow a union type to the member(s)
+that have that property -- useful for unions without a shared discriminant
+field.
+Simple Example: `if ("bark" in animal) { animal.bark(); }`
+Follow-up Questions: How is this different from checking a discriminant
+property with `===`?
+Interview Tip: Mention `in` is for existence checks (property shape),
+while `===` on a discriminant is for value checks -- different narrowing
+strategies for different union designs.
+
+Q2. What does the optional chaining operator (`?.`) do?
+Answer: `?.` short-circuits and returns `undefined` if the value before it
+is `null` or `undefined`, instead of throwing a runtime error, letting you
+safely access deeply nested properties or call methods without a chain of
+manual null checks.
+Simple Example: `const city = user?.address?.city;`
+Follow-up Questions: Does `?.` work with function calls and array indices too?
+Interview Tip: Yes -- mention `user?.getName?.()` and `arr?.[0]` as valid
+uses interviewers often forget to ask about.
+
+Q3. What does the nullish coalescing operator (`??`) do, and how is it
+different from `||`?
+Answer: `??` returns the right-hand value only if the left-hand value is
+`null` or `undefined`. `||` returns the right-hand value for ANY falsy
+value, including `0`, `""`, and `false` -- which causes bugs when `0` or
+`""` are legitimate valid values you didn't mean to replace.
+Simple Example: `const count = input ?? 10; // only replaces null/undefined, not 0`
+Follow-up Questions: Can you give a real bug caused by using `||` instead of
+`??`?
+Interview Tip: The classic example: a quantity field defaulting to `10` even
+when the user legitimately entered `0` -- this is a near-guaranteed
+follow-up, have it memorized.
+
+Q4. What is nullish coalescing assignment (`??=`)?
+Answer: `??=` assigns the right-hand value to a variable only if it's
+currently `null` or `undefined`, a shorthand for
+`x = x ?? value`. Useful for lazily initializing a value only if it hasn't
+been set yet.
+Simple Example: `config.timeout ??= 5000;`
+Follow-up Questions: How is this different from `||=`?
+Interview Tip: Same distinction as `??` vs `||` -- `??=` won't overwrite
+falsy-but-valid values like `0`.
+
+
+TOPIC 24: GENERICS
+--------------------------------------------------------------------------------
+
+Q1. What are generics and why do they exist?
+Answer: Generics let you write reusable functions, classes, or types that
+work with multiple types while preserving the specific type information at
+each call site, instead of using `any` (which loses type safety) or writing
+duplicate code for each type.
+Simple Example: `function identity<T>(value: T): T { return value; }`
+Follow-up Questions: What's the difference between using a generic and just
+using `any`?
+Interview Tip: This is the single most-asked TS interview question at almost
+every level -- your answer needs to be immediate and confident.
+
+Q2. How does TypeScript infer generic type arguments?
+Answer: When you call a generic function, TypeScript infers `T` from the
+arguments you pass, without you needing to explicitly specify it. You CAN
+explicitly provide it (`identity<string>("a")`) when inference is ambiguous
+or you want to be explicit.
+Follow-up Questions: When would inference fail and require an explicit
+type argument?
+Interview Tip: Mention empty array/object literals (`useState<string[]>([])`)
+as a common real-world case requiring explicit generics.
+
+Q3. How do you use multiple generic type parameters?
+Answer: You can define more than one type parameter, e.g. `<K, V>`, each
+independently inferred or specified, commonly used for functions that
+combine two different input types, like a `merge` or `pair` utility.
+Simple Example: `function pair<A, B>(a: A, b: B): [A, B] { return [a, b]; }`
+Follow-up Questions: How would you give one generic parameter a default type?
+Interview Tip: Mention `<T = string>` syntax for generic defaults.
+
+Q4. What's the difference between a generic function and a generic class?
+Answer: A generic function parameterizes a single call; a generic class
+parameterizes the ENTIRE class -- the type parameter is fixed once for an
+instance and shared across all its methods and properties.
+Simple Example: `class Box<T> { constructor(public value: T) {} }`
+Follow-up Questions: Can class methods introduce their OWN additional
+generic parameters beyond the class-level one?
+Interview Tip: Yes -- method-level generics can coexist with class-level
+generics; know this layering exists.
+
+Q5. How do generics interact with arrays and collections?
+Answer: Built-ins like `Array<T>`, `Map<K, V>`, `Set<T>`, and `Promise<T>`
+are all generic types themselves -- this is how TypeScript's standard
+library achieves type safety across different collection contents without
+duplicating definitions for every possible type.
+Follow-up Questions: How would you write your own generic `Stack<T>` class?
+Interview Tip: Practice writing a minimal generic Stack/Queue class from
+scratch -- it's a common live-coding request.
+
+Q6. What is a generic type alias or interface?
+Answer: You can parameterize `type` aliases and `interface`s the same way
+as functions/classes, letting you define reusable shapes like API response
+wrappers that work across many data types.
+Simple Example: `interface ApiResponse<T> { data: T; error: string | null; }`
+Follow-up Questions: How would you use this to type responses from different
+API endpoints consistently?
+Interview Tip: This generic-wrapper pattern is extremely common in
+real-world API layers -- mention it as practical, not just theoretical.
+
+Q7. What are higher-order generic functions?
+Answer: Functions that return other functions, where generics flow through
+to preserve type information across the returned function, common in
+functional composition, currying, and factory patterns like custom React
+hooks.
+Simple Example: `function withDefault<T>(fallback: T) { return (value: T | undefined) => value ?? fallback; }`
+Follow-up Questions: How does TypeScript infer types through multiple layers
+of function composition?
+Interview Tip: Only go deep here for senior roles -- keep it conceptual
+unless pushed.
+
+Q8. What are common mistakes developers make with generics?
+Answer: Overusing generics where a simple union or `unknown` would do;
+using a generic parameter only once (a sign it should probably just be a
+concrete type); and not constraining generics, which leads to overly
+permissive functions that accept invalid inputs. A generic should typically
+appear in at least two places (e.g. a parameter and the return type) to be
+worth using.
+Follow-up Questions: How do you decide when a generic is actually necessary
+versus over-engineering?
+Interview Tip: The "used in at least two places" heuristic is a great,
+memorable rule of thumb to state out loud.
+
+TOPIC 25: GENERIC CONSTRAINTS
+--------------------------------------------------------------------------------
+
+Q1. What is a generic constraint and why use one?
+Answer: A constraint (`T extends SomeType`) restricts what types can be
+passed as a generic argument, ensuring the generic type has certain
+properties or shape guaranteed, so you can safely use those properties
+inside the function.
+Simple Example: `function getLength<T extends { length: number }>(item: T) { return item.length; }`
+Follow-up Questions: What error would you get without the constraint if you
+tried to access `.length`?
+Interview Tip: Without the constraint, `.length` isn't guaranteed on `T`, so
+TypeScript would error -- explain this clearly to show cause and effect.
+
+Q2. How do you constrain a generic to keys of another generic type?
+Answer: Using `K extends keyof T`, which ensures `K` can only be a valid
+property name of `T`. This is the foundation of type-safe generic property
+accessors like a custom `get` function.
+Simple Example: `function get<T, K extends keyof T>(obj: T, key: K): T[K] { return obj[key]; }`
+Follow-up Questions: What does this pattern prevent that a plain
+`(obj: any, key: string)` signature would not?
+Interview Tip: This exact pattern is a very common live-coding/whiteboard
+question -- practice it until you can write it without hesitation.
+
+Q3. Can you have multiple constraints or default types on a generic?
+Answer: You can combine constraints with intersections
+(`T extends A & B`), and you can provide a default type argument
+(`T = DefaultType`) so the generic parameter is optional at call sites, used
+when not explicitly provided or inferable.
+Follow-up Questions: How would you constrain a generic to be an object AND
+provide a default?
+Interview Tip: Example: `function create<T extends object = {}>(): T { ... }`.
+
+Q4. What is a conditional constraint on a generic?
+Answer: You can use conditional types within a constraint to allow different
+type behavior depending on what's passed in, e.g. constraining `T` to
+extend one of several possible shapes and resolving to a different result
+type based on which branch matches.
+Follow-up Questions: How does this differ from function overloads achieving
+similar behavior?
+Interview Tip: Mention overloads are often more readable for 2-3 concrete
+cases; conditional generics scale better for open-ended type-level logic.
+
+Q5. Why is `T extends unknown` sometimes used in constraints even though it
+seems to constrain nothing?
+Answer: `T extends unknown` is often used to trigger "distributive"
+conditional type behavior over union types, since conditional types
+distribute over naked type parameters constrained this way -- it's a
+deliberate technique, not a no-op.
+Follow-up Questions: What does "distributive conditional type" mean?
+Interview Tip: This is deep/advanced -- only bring it up if the interviewer
+is clearly probing type-level programming skills.
+
+TOPIC 26: GENERICS GET PROP (KEYOF)
+--------------------------------------------------------------------------------
+
+Q1. What does the `keyof` operator do?
+Answer: `keyof T` produces a union type of all the property names (as string
+or symbol literal types) of `T`. It's commonly combined with generics to
+build type-safe property accessors and utility types.
+Simple Example: `interface User { id: number; name: string } type Keys = keyof User; // "id" | "name"`
+Follow-up Questions: What does `keyof` produce for an object with an index
+signature?
+Interview Tip: Mention it returns `string | number` (the index signature's
+key type) rather than specific literal names.
+
+Q2. How do you write a type-safe `getProperty` function using `keyof`?
+Answer: Combine a generic object type `T` with a generic key type
+`K extends keyof T`, then return `T[K]` (an indexed access type) as the
+return type -- this guarantees the key exists and the return type matches
+exactly.
+Simple Example: `function getProp<T, K extends keyof T>(obj: T, key: K) { return obj[key]; }`
+Follow-up Questions: What happens if you pass a key that doesn't exist on
+the object?
+Interview Tip: TypeScript rejects it at compile time -- reinforce that this
+is exactly what makes the pattern valuable over plain `any`-based access.
+
+Q3. What is an indexed access type (`T[K]`)?
+Answer: `T[K]` looks up the type of a specific property `K` on type `T`,
+similar to how you'd access a value at runtime, but at the type level. It's
+used to extract nested types without manually redefining them.
+Simple Example: `type NameType = User["name"]; // string`
+Follow-up Questions: Can you use a union of keys to extract multiple property
+types at once?
+Interview Tip: Yes -- `User["id" | "name"]` gives a union of those
+properties' types.
+
+Q4. How does `keyof typeof` combine to type object keys from a runtime
+value?
+Answer: `typeof obj` gets the object's inferred type, and `keyof` extracts
+its keys as a union -- combined, `keyof typeof obj`, this is the standard
+pattern for deriving a literal key union directly from a runtime constant
+object without duplicating the keys manually.
+Simple Example: `const colors = { red: "#f00", blue: "#00f" };\ntype ColorName = keyof typeof colors;`
+Follow-up Questions: Why is this preferred over manually typing
+`"red" | "blue"`?
+Interview Tip: Same "single source of truth" theme as the `typeof` topic --
+tie your answers together for a cohesive interview narrative.
+
+
+TOPIC 27: UTILITY TYPES
+--------------------------------------------------------------------------------
+
+Q1. What does `Partial<T>` do and when would you use it?
+Answer: `Partial<T>` makes every property of `T` optional. It's commonly
+used for update/patch functions where the caller only needs to supply the
+fields they want to change, rather than the full object.
+Simple Example: `function updateUser(id: number, changes: Partial<User>) { ... }`
+Follow-up Questions: How would you implement `Partial<T>` yourself using a
+mapped type?
+Interview Tip: Know the implementation: `{ [K in keyof T]?: T[K] }` --
+being able to write it from scratch signals real understanding, not just
+memorization.
+
+Q2. What does `Required<T>` do?
+Answer: The opposite of `Partial<T>` -- it makes every optional property
+required, removing the `?` modifier from all properties. Useful when you've
+validated/filled in all fields and want a fully-populated type going
+forward.
+Follow-up Questions: How would you implement it using a mapped type?
+Interview Tip: `{ [K in keyof T]-?: T[K] }` -- the `-?` removes the optional
+modifier; mention this syntax if asked.
+
+Q3. What does `Readonly<T>` do?
+Answer: Makes every property of `T` `readonly`, preventing reassignment at
+compile time. Commonly used for immutable state, Redux state shapes, or
+config objects that shouldn't be mutated after creation.
+Follow-up Questions: Does `Readonly<T>` provide deep immutability?
+Interview Tip: No -- it's shallow only. Nested objects remain mutable unless
+you build a custom deep-readonly type. This is a very common trap question.
+
+Q4. What does `Pick<T, K>` do?
+Answer: Creates a new type containing only the specified subset of
+properties `K` from `T`. Useful for deriving smaller, focused types from a
+larger model without duplicating field definitions.
+Simple Example: `type UserPreview = Pick<User, "id" | "name">;`
+Follow-up Questions: What happens if you pass a key that doesn't exist on `T`?
+Interview Tip: TypeScript errors at compile time -- `K` is constrained to
+`keyof T`.
+
+Q5. What does `Omit<T, K>` do, and how is it different from `Pick`?
+Answer: `Omit<T, K>` creates a type with all properties of `T` EXCEPT the
+specified keys `K` -- the inverse of `Pick`. It's the more commonly used of
+the two in practice, since it's often easier to say "everything except X"
+than to enumerate every field you want to keep.
+Simple Example: `type UserWithoutPassword = Omit<User, "password">;`
+Follow-up Questions: Is `Omit` strict about the keys passed to it (does it
+error on non-existent keys)?
+Interview Tip: Unlike `Pick`, `Omit`'s key parameter is NOT strictly
+constrained to `keyof T` in its built-in definition -- a subtle but real
+gotcha some interviewers specifically test for.
+
+Q6. What does `Record<K, V>` do?
+Answer: Builds an object type where every key in union `K` maps to a value
+of type `V`. It's the standard way to type dictionary-like objects with a
+known, fixed set of keys.
+Simple Example: `type Scores = Record<"math" | "science", number>;`
+Follow-up Questions: How is `Record<string, V>` different from an index
+signature `{ [key: string]: V }`?
+Interview Tip: They're functionally very similar for `string` keys --
+`Record` is just more concise/readable syntax for the same concept.
+
+Q7. What does `Exclude<T, U>` and `Extract<T, U>` do?
+Answer: `Exclude<T, U>` removes from union `T` any members assignable to
+`U`. `Extract<T, U>` does the opposite -- it keeps only members of `T`
+assignable to `U`. They're used to derive narrower unions from a broader one.
+Simple Example: `type NonAdmin = Exclude<"admin" | "user" | "guest", "admin">; // "user" | "guest"`
+Follow-up Questions: How would you implement `Exclude` yourself using a
+conditional type?
+Interview Tip: `T extends U ? never : T` -- mention the distributive
+conditional type behind it if the interviewer wants depth.
+
+Q8. What does `NonNullable<T>` do?
+Answer: Removes `null` and `undefined` from a type `T`, leaving only the
+non-nullish members. Useful after you've validated a value isn't nullish but
+its declared type still includes those.
+Simple Example: `type Definite = NonNullable<string | null | undefined>; // string`
+Follow-up Questions: How is this different from using the `!` non-null
+assertion operator?
+Interview Tip: `NonNullable` operates at the type level for transformation;
+`!` is a per-value assertion at usage -- different tools for different
+situations.
+
+TOPIC 28: FUNCTION UTILITY TYPES
+--------------------------------------------------------------------------------
+
+Q1. What does `ReturnType<T>` do?
+Answer: Extracts the return type of a function type `T`, useful when you
+want to derive a type from an existing function's output without manually
+redefining it -- keeping a single source of truth.
+Simple Example: `function getUser() { return { id: 1, name: "A" }; }\ntype User = ReturnType<typeof getUser>;`
+Follow-up Questions: Why do you need `typeof` alongside `ReturnType` here?
+Interview Tip: `ReturnType` expects a TYPE, and `getUser` alone is a VALUE
+-- `typeof` converts the value to its type first. This combination trips
+people up; know it cold.
+
+Q2. What does `Parameters<T>` do?
+Answer: Extracts a function's parameter types as a tuple type. Useful for
+wrapping or proxying a function while keeping its exact argument types in
+sync automatically.
+Simple Example: `type Args = Parameters<typeof getUser>;`
+Follow-up Questions: How would you use `Parameters` to type a wrapper/decorator
+function generically?
+Interview Tip: Mention logging/memoization wrapper functions as a real
+use case -- `function logged<F extends (...args: any[]) => any>(fn: F) { ... }`.
+
+Q3. What does `InstanceType<T>` do?
+Answer: Extracts the instance type produced by a class constructor type,
+useful for generic factories or dependency injection code that works with
+class references rather than instances directly.
+Simple Example: `class User {} type U = InstanceType<typeof User>;`
+Follow-up Questions: How is this different from just using the class name as
+a type directly?
+Interview Tip: Mostly relevant when working generically with `typeof SomeClass`
+as a value (e.g. a factory parameter) rather than the class type itself.
+
+Q4. How would you type a higher-order function that wraps another function
+without losing its original type signature?
+Answer: Use a generic constrained to a function type
+(`<F extends (...args: any[]) => any>`), then reference `Parameters<F>` and
+`ReturnType<F>` (or just return `F` itself) to preserve the original
+signature through the wrapper.
+Simple Example: `function withLogging<F extends (...args: any[]) => any>(fn: F): F { ... }`
+Follow-up Questions: Why is `any[]` acceptable here despite generally
+avoiding `any`?
+Interview Tip: Explain this specific `any[]` usage is a well-known,
+accepted TypeScript idiom for maximally generic function constraints --
+distinguishing "lazy any" from "intentional any" shows maturity.
+
+TOPIC 29: UNION HELPERS
+--------------------------------------------------------------------------------
+
+Q1. How do you turn a union type into an array of its values at runtime,
+and does TypeScript help enforce completeness?
+Answer: TypeScript can't automatically generate a runtime array from a type
+-- types don't exist at runtime. Instead, the common pattern is defining the
+array first with `as const` and DERIVING the union type from it via
+`typeof arr[number]`, keeping the value list as the single source of truth.
+Follow-up Questions: What's the risk of maintaining the union type and the
+array separately instead?
+Interview Tip: Reuse the `as const` derivation pattern here -- interviewers
+like seeing you connect topics rather than treating each in isolation.
+
+Q2. How do you convert a union type to an intersection type
+(advanced/library-author level)?
+Answer: This uses a technique involving conditional types and function
+parameter contravariance to "flatten" a union into an intersection at the
+type level. It's an advanced, rarely-needed trick mostly seen inside utility
+type libraries rather than app code.
+Follow-up Questions: Have you ever needed this in production code?
+Interview Tip: It's fine to say this is beyond typical day-to-day use --
+acknowledging the boundary of practical necessity is a good senior signal.
+
+Q3. How do you check if two union members overlap or exclude each other
+safely?
+Answer: Use `Extract<A, B>` to find overlapping members or `Exclude<A, B>`
+to find non-overlapping ones, both built on distributive conditional types
+that check each union member individually against the other type.
+Follow-up Questions: Why does this work as a "distributive" operation
+across each union member rather than the whole union at once?
+Interview Tip: Distributive conditional types are TypeScript testing your
+depth -- a working knowledge that "conditional types distribute over naked
+type parameters in a union" is sufficient without deep internals.
+
+Q4. What's the difference between narrowing a union manually with `if`
+statements vs a `switch` statement?
+Answer: Both narrow correctly, but a `switch` on a discriminant property
+combined with a `never`-typed `default` case gives you compile-time
+exhaustiveness checking -- if a new union member is added later and not
+handled, the compiler flags it. Chained `if/else` doesn't give this
+guarantee as cleanly.
+Interview Tip: This reinforces exhaustiveness checking -- a recurring,
+high-value TypeScript concept across several topics; be ready to explain it
+confidently whenever unions come up.
+
+TOPIC 30: AWAITED UTILITY & PROMISES
+--------------------------------------------------------------------------------
+
+Q1. What does the `Awaited<T>` utility type do?
+Answer: `Awaited<T>` unwraps the resolved value type of a `Promise`,
+including nested Promises (a `Promise<Promise<T>>` resolves to `T`, not
+`Promise<T>`), matching how `await` actually behaves at runtime with
+Promise chains/thenables.
+Simple Example: `type Resolved = Awaited<Promise<string>>; // string`
+Follow-up Questions: Why is `Awaited` needed instead of just accessing the
+Promise's generic parameter directly?
+Interview Tip: Mention nested Promise flattening specifically -- that's the
+detail that differentiates `Awaited<T>` from a naive generic unwrap.
+
+Q2. How do you type a function that returns a Promise resolving to an
+array of a generic type?
+Answer: Combine generics with `Promise<T[]>` as the return type, letting
+callers get fully typed resolved arrays without manual casting after
+`await`.
+Simple Example: `async function fetchList<T>(url: string): Promise<T[]> { ... }`
+Follow-up Questions: How would you type error handling for a rejected
+Promise?
+Interview Tip: Mention Promise rejections are typically untyped (`unknown`
+in a `catch` block under strict settings) -- TypeScript doesn't track
+rejection types the way it tracks resolution types.
+
+Q3. What type does a `catch` block's error parameter have, and why?
+Answer: Under `useUnknownInCatchVariables` (default in strict mode since TS
+4.4), caught errors are typed as `unknown` rather than `any`, since
+JavaScript allows throwing any value, not just `Error` instances -- forcing
+you to narrow before accessing properties like `.message`.
+Simple Example: `try { ... } catch (err) { if (err instanceof Error) console.log(err.message); }`
+Follow-up Questions: Why might someone throw a non-Error value, and how do
+you defensively handle it?
+Interview Tip: This is a great chance to show defensive coding habits --
+always narrow with `instanceof Error` before touching error properties.
+
+Q4. How do you type `Promise.all` with multiple different resolved types?
+Answer: TypeScript infers a tuple of resolved types matching the input
+array/tuple of Promises, so `Promise.all([p1, p2])` where `p1: Promise<string>`
+and `p2: Promise<number>` resolves to `[string, number]` automatically,
+without manual annotation.
+Follow-up Questions: What happens to the inferred type if you pass a plain
+array (not a tuple) of Promises with mixed types?
+Interview Tip: Mention that a plain array of mixed-type Promises resolves to
+a union array type rather than a precise tuple -- passing a literal tuple
+(fixed-length array) preserves per-position typing.
+
+
+TOPIC 31: CLASSES & CONSTRUCTORS
+--------------------------------------------------------------------------------
+
+Q1. How do you type class properties and constructors?
+Answer: Class properties are declared with a type annotation, similar to
+variables, and can be initialized inline or in the constructor. The
+constructor itself doesn't have a return type annotation -- TypeScript
+always treats it as returning an instance of the class.
+Simple Example: `class User { id: number; constructor(id: number) { this.id = id; } }`
+Follow-up Questions: What happens if a property is declared but not
+initialized anywhere?
+Interview Tip: Mention `strictPropertyInitialization` -- it errors on
+uninitialized properties unless marked optional, has a definite assignment
+assertion (`!`), or is assigned in the constructor.
+
+Q2. What is the difference between a class and an interface for defining
+object structure?
+Answer: An interface is purely a compile-time type with zero runtime
+presence. A class produces both a runtime value (the constructor function/
+prototype) AND a type (the instance shape) -- you can use a class as a
+type, but you can also `instanceof` check it and instantiate it, unlike an
+interface.
+Follow-up Questions: When would you choose a class purely for its type,
+without ever instantiating it?
+Interview Tip: Rare in practice -- usually if you need a class you also need
+its runtime behavior (instantiation, inheritance, `instanceof`).
+
+Q3. How does class inheritance work with `extends` and `super`?
+Answer: A class extends a base class with `extends`, inheriting its
+properties and methods. The subclass constructor must call `super(...)`
+before accessing `this`, passing along required base-class constructor
+arguments.
+Simple Example: `class Admin extends User { constructor(id: number, public role: string) { super(id); } }`
+Follow-up Questions: What happens if you forget to call `super()` in a
+subclass constructor?
+Interview Tip: TypeScript/JS throws a runtime ReferenceError if you access
+`this` before calling `super()` -- and TypeScript will flag it at compile
+time too.
+
+Q4. What are static members and how do you type them?
+Answer: Static properties/methods belong to the class itself, not
+instances, declared with the `static` keyword. They're accessed via the
+class name and typed the same way as instance members, just without access
+to `this` referring to an instance.
+Simple Example: `class Counter { static count = 0; static increment() { Counter.count++; } }`
+Follow-up Questions: Can a static member be `abstract`?
+Interview Tip: No -- `abstract` only applies to instance members meant to be
+implemented by subclasses; static members belong to a single concrete class.
+
+Q5. How do method overloads work on a class?
+Answer: You declare multiple signatures for the same method name (without
+implementations), followed by a single implementation signature that's
+broad enough to cover all overloads -- callers only see the specific
+overload signatures, not the general implementation one.
+Follow-up Questions: Why does the implementation signature need to be more
+general than each individual overload?
+Interview Tip: Emphasize the implementation signature is invisible to
+callers -- it just needs to safely handle whatever the public overloads
+promise.
+
+TOPIC 32: ACCESS MODIFIERS (PRIVATE/PUBLIC)
+--------------------------------------------------------------------------------
+
+Q1. What are the access modifiers in TypeScript and what's the default?
+Answer: `public`, `private`, and `protected`. `public` is the default if
+omitted -- accessible from anywhere. `private` restricts access to within
+the declaring class only, enforced at compile time (not at runtime, unless
+using the native `#` syntax).
+Follow-up Questions: Is TypeScript's `private` truly private at runtime?
+Interview Tip: Say clearly: no -- TypeScript `private` is compile-time only
+and can be bypassed via bracket notation or by compiling away types;
+JavaScript's native `#field` syntax is truly private at runtime.
+
+Q2. What's the difference between TypeScript's `private` keyword and
+JavaScript's native `#` private fields?
+Answer: TypeScript `private` is a compile-time-only restriction -- the
+property still exists as a normal, accessible property in the compiled JS
+output. Native `#field` syntax is enforced by the JavaScript engine itself
+at runtime, so it's truly inaccessible from outside the class, even via
+reflection or bracket notation.
+Simple Example: `class Account { #balance = 0; }`
+Follow-up Questions: Why might a team still prefer TypeScript's `private`
+over native `#` fields?
+Interview Tip: Mention native `#` fields have some tooling/serialization
+quirks (e.g. with older debuggers or certain library patterns) -- teams
+sometimes prefer TS `private` for better compatibility despite weaker
+enforcement.
+
+Q3. Can you access a `private` member from a subclass?
+Answer: No -- `private` members are only accessible within the exact class
+that declares them, not subclasses. This is a key distinction from
+`protected`, which IS accessible in subclasses.
+Follow-up Questions: What error would a subclass get trying to access a
+parent's `private` member?
+Interview Tip: This is the cleanest way to differentiate `private` vs
+`protected` if asked to compare them directly.
+
+Q4. What is parameter property shorthand with access modifiers?
+Answer: Adding an access modifier directly to a constructor parameter
+(`constructor(private id: number)`) automatically declares AND assigns a
+class property in one step, eliminating repetitive boilerplate of declaring
+the property separately and assigning `this.id = id`.
+Simple Example: `class User { constructor(private id: number, public name: string) {} }`
+Follow-up Questions: Does this work with `readonly` too?
+Interview Tip: Yes -- modifiers can be combined, e.g.
+`constructor(public readonly id: number)`.
+
+TOPIC 33: ACCESS MODIFIERS (PROTECTED)
+--------------------------------------------------------------------------------
+
+Q1. What does `protected` mean and how is it different from `private`?
+Answer: `protected` members are accessible within the declaring class AND
+its subclasses, but not from outside the class hierarchy entirely. `private`
+restricts access to only the exact declaring class, excluding subclasses.
+Follow-up Questions: Why would you choose `protected` over `private` for a
+base class property?
+Interview Tip: Use case: base class methods/properties meant to be reused
+or overridden by subclasses, but still hidden from external consumers.
+
+Q2. Can a `protected` member be accessed from an unrelated class instance,
+even of the same type, within a subclass method?
+Answer: Generally no in most implementations -- a subclass can access
+`protected` members on `this` or instances of its own type, but not
+arbitrary instances of the base class from outside that relationship,
+depending on the exact structural context. This nuance is rarely tested
+deeply outside of very senior interviews.
+Follow-up Questions: Have you encountered a real bug caused by `protected`
+visibility rules?
+Interview Tip: It's fine to keep this answer high-level -- most interviews
+don't go deeper than the basic private/protected/public distinction.
+
+Q3. When would you use `protected` constructors?
+Answer: A `protected` constructor prevents direct instantiation of a class
+from outside, while still allowing subclasses to call `super()` -- a common
+pattern for enforcing that a base class is only used through factory
+methods or subclassing, like an abstract-ish base without full `abstract`.
+Interview Tip: Mention the Factory pattern as a concrete real-world tie-in.
+
+TOPIC 34: GETTERS & SETTERS
+--------------------------------------------------------------------------------
+
+Q1. How do you define getters and setters in a TypeScript class?
+Answer: Using the `get` and `set` keywords, they let you expose
+property-like syntax (`obj.value`) while running custom logic behind the
+scenes, such as validation on write or computed values on read.
+Simple Example: `class Temp { private _c = 0; get fahrenheit() { return this._c * 9/5 + 32; } set fahrenheit(f) { this._c = (f - 32) * 5/9; } }`
+Follow-up Questions: Can a getter and setter have different types?
+Interview Tip: In modern TypeScript versions this is allowed (get can
+return a narrower type than what set accepts) -- mention it if asked, but
+don't worry if you're unsure of the exact version it was introduced in.
+
+Q2. Why would you use a getter/setter instead of a plain public property?
+Answer: To add validation, computed derivation, or side effects (like
+logging) on read/write access, without changing the external API -- callers
+still use normal property syntax, unaware there's logic behind it.
+Follow-up Questions: What's a real validation example you'd implement in a
+setter?
+Interview Tip: A great concrete example: a setter that throws or clamps a
+value if it's out of an allowed range (e.g., a percentage that must stay
+between 0 and 100).
+
+Q3. Do getters/setters affect how a class satisfies an interface?
+Answer: From the interface's perspective, a getter/setter pair looks
+identical to a regular property -- interfaces describe a property's type,
+not whether it's backed by a plain field or accessor methods, so a class
+can satisfy an interface property requirement using either.
+Interview Tip: This shows understanding that interfaces describe shape/type,
+not implementation mechanism.
+
+TOPIC 35: IMPORT & EXPORT
+--------------------------------------------------------------------------------
+
+Q1. What's the difference between a named export and a default export?
+Answer: A named export (`export const x = ...`) must be imported using the
+exact same name (or an alias) in curly braces, and a module can have many
+named exports. A default export (`export default ...`) is imported without
+curly braces and can be given any name at the import site, but a module can
+only have one default export.
+Follow-up Questions: Which is generally recommended for larger codebases,
+and why?
+Interview Tip: Many teams prefer named exports for better refactor
+tooling/autocomplete and to avoid inconsistent naming across import sites --
+have an opinion but acknowledge it's a style choice.
+
+Q2. What is `import type` and when should you use it?
+Answer: `import type { X } from "./module"` explicitly imports something
+that's ONLY used as a type, ensuring it's completely stripped from the
+compiled JS output -- useful for avoiding unnecessary runtime imports (and
+potential circular import issues) when you only need type information.
+Follow-up Questions: What happens if you use a regular `import` for a
+type-only value with `isolatedModules` enabled in certain build tools?
+Interview Tip: Mention that some bundlers (like esbuild/SWC, which compile
+files independently) can't always tell if an import is type-only, so
+explicit `import type` avoids ambiguity and keeps builds correct.
+
+Q3. How do you re-export types/values from a barrel file?
+Answer: Using `export * from "./module"` to re-export everything, or
+`export { X } from "./module"` to re-export specific named items, commonly
+used in an `index.ts` file to create a single, clean import entry point for
+a folder/module.
+Follow-up Questions: What's a downside of overusing barrel files in large
+codebases?
+Interview Tip: Mention potential circular dependency issues and slower
+build/bundling performance in very large barrel-heavy codebases as a
+thoughtful trade-off to raise.
+
+
+TOPIC 36: UNKNOWN TYPE
+--------------------------------------------------------------------------------
+
+Q1. Why was `unknown` introduced when `any` already existed?
+Answer: `any` completely disables type checking, letting you call/access
+anything on it without error -- a common source of runtime bugs disguised
+as type-safe code. `unknown` was introduced as a type-safe alternative: it
+can hold any value, but you must narrow it before doing anything with it,
+preserving safety while still allowing genuinely unknown data.
+Follow-up Questions: Can you assign `unknown` to a `string` variable
+directly?
+Interview Tip: No -- you must narrow first (e.g., `typeof` check or
+assertion); this is the core distinguishing behavior from `any`.
+
+Q2. How do you safely work with a value typed as `unknown`?
+Answer: Narrow it using `typeof`, `instanceof`, a custom type predicate
+function, or runtime validation (like Zod), before accessing any properties
+or calling any methods on it.
+Simple Example: `function process(input: unknown) { if (typeof input === "string") input.toUpperCase(); }`
+Follow-up Questions: Where does `unknown` commonly show up in real code
+(hint: `catch` blocks, API responses)?
+Interview Tip: Mention `catch` block error typing and raw external API
+responses as the two most common real-world sources of `unknown`.
+
+Q3. Is `unknown` assignable to `any`, and is `any` assignable to `unknown`?
+Answer: Both are true -- `any` is assignable to everything (including
+`unknown`), and `unknown` is assignable to `any` (since `any` accepts
+anything). The key asymmetry is what you can do with the value AFTER
+assignment: `any` lets you do anything unchecked, `unknown` still requires
+narrowing.
+Interview Tip: This trips people up -- the assignability rules are
+symmetric, but the SAFETY after assignment is not.
+
+TOPIC 37: CONTROL FLOW NARROWING & TYPE GUARDS
+--------------------------------------------------------------------------------
+
+Q1. What is control flow analysis in TypeScript?
+Answer: TypeScript's compiler tracks the possible type of a variable at each
+point in your code based on the control flow -- conditionals, early
+returns, loops -- narrowing or widening the type as it follows each
+possible execution path. This is what makes narrowing "just work" inside an
+`if` block without extra annotations.
+Follow-up Questions: Does narrowing persist after the `if` block ends?
+Interview Tip: No -- narrowing only applies within the scope where the
+check holds true (or in the corresponding `else` branch); outside that, the
+original wider type returns.
+
+Q2. What are the built-in type guards TypeScript understands?
+Answer: `typeof` (for primitives), `instanceof` (for class instances),
+`in` (for property existence), and equality narrowing (`===`/`!==` against
+literal values or discriminants). TypeScript recognizes each of these
+patterns automatically inside conditionals.
+Follow-up Questions: Which of these works for narrowing between two
+interface types without classes?
+Interview Tip: Mention `in` and discriminant equality checks -- `instanceof`
+doesn't apply to interfaces since they don't exist at runtime.
+
+Q3. What is a custom type guard (type predicate function)?
+Answer: A function with a return type of `param is Type` that lets you
+encapsulate complex narrowing logic into a reusable, named function, which
+TypeScript then trusts to narrow the type at call sites just like a
+built-in guard.
+Simple Example: `function isUser(x: unknown): x is User { return typeof x === "object" && x !== null && "id" in x; }`
+Follow-up Questions: What happens if the predicate's logic is actually
+wrong -- does TypeScript catch it?
+Interview Tip: Important nuance: TypeScript trusts your predicate's return
+type annotation completely -- if the runtime logic is wrong, TypeScript
+won't catch the mismatch. This is a common "gotcha" follow-up.
+
+Q4. How does narrowing work inside a `switch` statement over a
+discriminated union?
+Answer: TypeScript narrows the union to the specific member matching each
+`case` label based on the discriminant property, giving full type safety
+within each case block, and can enforce exhaustiveness if the `default`
+case is typed to accept `never`.
+Follow-up Questions: How would you write the exhaustive `default` case?
+Interview Tip: Have this exact code memorized:
+`default: { const _exhaustive: never = value; throw new Error("Unhandled"); }`
+
+Q5. How does narrowing behave with array/object destructuring?
+Answer: Narrowing generally applies to the destructured variable
+individually going forward, but destructuring itself doesn't automatically
+narrow based on other properties -- each destructured binding is typed
+based on the source property's declared type at the point of destructuring.
+Follow-up Questions: Does narrowing survive being passed into a callback
+function?
+Interview Tip: Generally NO -- narrowing doesn't persist across closures
+into a separate function scope unless the variable is `const` and the
+callback runs synchronously in specific analyzable cases; TypeScript is
+conservative here to avoid unsound assumptions about async timing.
+
+Q6. What's the difference between narrowing with `===` on a discriminant vs
+narrowing with truthy checks?
+Answer: Discriminant equality checks narrow precisely to the exact union
+member matching that literal value. Truthy checks (`if (value)`) narrow by
+removing falsy possibilities (`""`, `0`, `false`, `null`, `undefined`,
+`NaN`), which is often broader/less precise and can hide unintended cases
+compared to an explicit discriminant check.
+Interview Tip: Mention truthy narrowing is convenient but can be
+imprecise -- e.g., it won't distinguish between different truthy object
+shapes in a union.
+
+Q7. What is assignment-based narrowing?
+Answer: When you assign a more specific value to a `let` variable, TypeScript
+narrows its type within that scope until it's reassigned or control flow
+merges back with a branch where it could be the wider type again.
+Interview Tip: This is a subtle, less commonly asked nuance -- a
+brief acknowledgment is enough unless the interviewer pushes further.
+
+TOPIC 38: ASYNC/AWAIT & PROMISES
+--------------------------------------------------------------------------------
+
+Q1. How does TypeScript type an `async` function's return value?
+Answer: TypeScript automatically wraps whatever you `return` inside an
+`async` function in a `Promise<>`. If you write `return 5` in an `async`
+function, its declared/inferred return type becomes `Promise<number>`, not
+`number`.
+Follow-up Questions: What if you explicitly return a Promise inside an
+async function -- does it double-wrap?
+Interview Tip: No -- TypeScript/JS automatically flatten nested Promises,
+matching `Awaited<T>` behavior; it never becomes `Promise<Promise<T>>`.
+
+Q2. How do you correctly type error handling for async functions?
+Answer: Wrap `await` calls in `try/catch`, with the caught error typed as
+`unknown` under strict settings -- narrow with `instanceof Error` before
+accessing `.message` or other properties, since JS allows throwing
+non-Error values.
+Follow-up Questions: How would you create a custom typed error class for
+more specific catch handling?
+Interview Tip: Mention extending the native `Error` class
+(`class ApiError extends Error { ... }`) and narrowing with
+`instanceof ApiError` for specific handling branches.
+
+Q3. What's a common mistake with `async` functions inside `.map()` or
+`.forEach()`?
+Answer: `.forEach()` doesn't wait for async callbacks -- it fires them all
+without awaiting, so the outer function continues before they resolve. For
+sequential/parallel async iteration, use a `for...of` loop with `await`, or
+`Promise.all()` with `.map()` for parallel execution.
+Follow-up Questions: How would you run several async operations in parallel
+and wait for all of them?
+Interview Tip: `await Promise.all(items.map(item => processAsync(item)))` --
+know this pattern cold, it's asked extremely often.
+
+Q4. What is the difference between `Promise.all`, `Promise.allSettled`,
+`Promise.race`, and `Promise.any`?
+Answer: `Promise.all` rejects immediately if any Promise rejects.
+`Promise.allSettled` waits for all Promises regardless of outcome and
+returns their individual statuses. `Promise.race` resolves/rejects as soon
+as the FIRST Promise settles (success or failure). `Promise.any` resolves
+as soon as the first Promise FULFILLS, ignoring rejections unless all
+reject.
+Follow-up Questions: When would you specifically choose `allSettled` over
+`all`?
+Interview Tip: Mention scenarios where partial failure is acceptable, e.g.
+fetching data from multiple independent sources where one failing shouldn't
+block the others.
+
+Q5. How do you type a function that accepts either a value or a Promise of
+that value?
+Answer: Use a union type: `T | Promise<T>`, common for functions accepting
+flexible sync/async input, then normalize internally with `await` (which
+safely passes through non-Promise values unchanged).
+Simple Example: `async function resolveValue<T>(value: T | Promise<T>): Promise<T> { return await value; }`
+Interview Tip: Mention `await` on a non-Promise value simply returns it
+immediately -- a useful, often-overlooked JS behavior.
+
+
+TOPIC 39: TYPE PREDICATES
+--------------------------------------------------------------------------------
+
+Q1. What is the syntax and purpose of a type predicate?
+Answer: A type predicate is a function return type written as
+`paramName is Type`, telling TypeScript that if the function returns `true`,
+the parameter can be safely narrowed to `Type` at the call site. It's how
+you build custom, reusable type guards beyond the built-in `typeof`/
+`instanceof`/`in` checks.
+Simple Example: `function isNumber(x: unknown): x is number { return typeof x === "number"; }`
+Follow-up Questions: What's the risk if the predicate's actual logic doesn't
+match its declared type?
+Interview Tip: Reiterate: TypeScript trusts the annotation, not the logic --
+a wrong predicate silently produces unsound narrowing. This is a favorite
+"gotcha" question.
+
+Q2. How do you write a type predicate to filter an array and keep proper
+typing?
+Answer: Pass a type-predicate function to `.filter()`, and TypeScript infers
+the resulting array's element type as the narrowed type instead of the
+original union/nullable type.
+Simple Example: `const nums: (number | undefined)[] = [1, undefined, 2];\nconst clean = nums.filter((n): n is number => n !== undefined);`
+Follow-up Questions: What would the resulting type be WITHOUT the type
+predicate on the filter callback?
+Interview Tip: Without the predicate, `.filter()` doesn't narrow the array
+type at all -- it stays `(number | undefined)[]` even though the
+`undefined` values are runtime-removed. This is a very commonly tested
+practical gotcha.
+
+Q3. Can a type predicate narrow based on a property of an object rather
+than the whole parameter?
+Answer: Yes -- predicates aren't limited to `param is Type`; you can also
+narrow object properties using `asserts` functions or predicates checking
+nested structure, though the parameter itself is what gets narrowed in the
+type system, based on your check logic.
+Follow-up Questions: What's the difference between a type predicate
+function and an `asserts` function?
+Interview Tip: Mention `asserts` functions (introduced later) don't return
+a boolean at all -- they throw if the condition fails, and narrow the type
+for all code AFTER the call rather than within an `if` block.
+
+TOPIC 40: RUNTIME VALIDATION (ZOD)
+--------------------------------------------------------------------------------
+
+Q1. Why do you need runtime validation libraries like Zod when you already
+have TypeScript types?
+Answer: TypeScript types are completely erased at compile time -- they
+provide zero protection against malformed data coming from external
+sources like API responses, user input, or file parsing. Zod (and similar
+libraries) validate data shape AT RUNTIME and can also derive a static
+TypeScript type from the same schema, closing the gap between compile-time
+and runtime safety.
+Follow-up Questions: What's a real bug you've seen from trusting an
+untyped/unvalidated API response?
+Interview Tip: This is one of the highest-signal questions for senior
+candidates -- have a genuine example ready if you can, showing you
+understand types are a development aid, not a runtime guarantee.
+
+Q2. How do you derive a TypeScript type from a Zod schema?
+Answer: Using `z.infer<typeof schema>`, which extracts the static type
+matching the schema's validation rules, so you only define the shape once
+and get both runtime validation and compile-time types automatically kept
+in sync.
+Simple Example: `const UserSchema = z.object({ id: z.number(), name: z.string() });\ntype User = z.infer<typeof UserSchema>;`
+Follow-up Questions: Why is this preferred over maintaining a separate
+TypeScript `interface` alongside a validation schema?
+Interview Tip: Same recurring theme across this handbook: single source of
+truth avoids drift between two definitions of the same shape.
+
+Q3. How do you use Zod to safely parse and narrow an `unknown` value?
+Answer: Call `.parse()` (throws on invalid data) or `.safeParse()` (returns
+a result object with `success`/`data`/`error` instead of throwing), which
+validates the shape at runtime and returns a properly typed value matching
+the schema on success.
+Follow-up Questions: When would you use `.safeParse()` over `.parse()`?
+Interview Tip: Mention `.safeParse()` for expected/recoverable invalid input
+(like form validation), and `.parse()` (with a wrapping try/catch) for
+unexpected failures you want to fail loudly on, like a broken internal API
+contract.
+
+Q4. Where in an application's architecture should runtime validation
+typically happen?
+Answer: At the boundaries where untrusted or external data enters the
+system -- API response handlers, form submissions, file/config parsing, and
+environment variable loading. Internal function calls between your own
+already-typed code generally don't need re-validation, since TypeScript
+already guarantees shape there.
+Follow-up Questions: Would you validate every internal function call for
+extra safety?
+Interview Tip: No -- explain that over-validating internal code is wasted
+overhead; the whole point is validating only at the "trust boundary" where
+data enters from outside your type-checked codebase.
+
+TOPIC 41: CONSTRUCTOR PARAMETER PROPERTIES
+--------------------------------------------------------------------------------
+
+Q1. What is a parameter property and what problem does it solve?
+Answer: Adding an access modifier (`public`, `private`, `protected`, or
+`readonly`) directly to a constructor parameter automatically both declares
+a class property AND assigns the parameter's value to it, eliminating the
+need to separately declare the field and write `this.x = x` in the
+constructor body.
+Simple Example: `class Point { constructor(public x: number, public y: number) {} }`
+Follow-up Questions: Does this work if you mix parameter properties with
+regular constructor parameters?
+Interview Tip: Yes -- you can mix them freely; only parameters with an
+access modifier become class properties.
+
+Q2. Are there any downsides to using parameter properties everywhere?
+Answer: For classes with many parameters or complex initialization logic,
+parameter properties can make the constructor signature harder to read at
+a glance, and they can obscure additional logic that needs to run during
+assignment (like validation) since the assignment happens implicitly.
+Follow-up Questions: When would you choose explicit property declarations
+and manual assignment instead?
+Interview Tip: Mention favoring explicit assignment when you need
+validation or transformation logic during construction -- parameter
+properties are best for simple, direct pass-through fields.
+
+Q3. Can parameter properties be combined with default values?
+Answer: Yes -- `constructor(public role: string = "user") {}` works exactly
+like a normal default parameter, while also declaring the class property in
+one step.
+Interview Tip: Keep this answer brief -- it's a natural, low-friction
+follow-up rather than a standalone deep topic.
+
+TOPIC 42: ENUMS & ABSTRACT CLASSES
+--------------------------------------------------------------------------------
+
+Q1. What is an `enum` and what are the different kinds?
+Answer: An `enum` defines a named set of constant values. Numeric enums
+auto-increment from 0 by default; string enums require each member to have
+an explicit string value. Numeric enums also generate a REVERSE mapping
+(value-to-name) at runtime, while string enums do not.
+Simple Example: `enum Status { Active, Inactive } // 0, 1`
+Follow-up Questions: Why do many teams avoid enums in favor of literal
+unions?
+Interview Tip: Have a clear opinion: enums generate actual runtime code
+(unlike most TS constructs), can behave unexpectedly with reverse mapping,
+and literal unions (`"active" | "inactive"`) are often simpler and fully
+erased -- this is a common, expected talking point.
+
+Q2. What is a `const enum` and how is it different from a regular `enum`?
+Answer: A `const enum` is fully inlined at compile time -- references to
+its members are replaced directly with their literal values, and no
+runtime object is generated at all, making it more performant but with some
+tooling limitations (e.g., incompatible with certain bundler settings like
+`isolatedModules`).
+Follow-up Questions: Why might a `const enum` cause build errors in some
+modern bundler setups?
+Interview Tip: Mention that tools compiling files in isolation (like
+esbuild/SWC) can't always resolve `const enum` inlining correctly, which is
+why many teams avoid them in modern build pipelines.
+
+Q3. What is an abstract class and how is it different from a regular
+class or an interface?
+Answer: An abstract class can't be instantiated directly -- it's meant to
+be extended -- and can declare `abstract` methods/properties that
+subclasses MUST implement, while also providing concrete, shared
+implementation for other methods. Unlike an interface (pure contract, no
+implementation, no runtime presence), an abstract class can mix required
+contracts with actual shared logic, and it does exist at runtime.
+Simple Example: `abstract class Shape { abstract area(): number; describe() { return \`Area: \${this.area()}\`; } }`
+Follow-up Questions: When would you choose an abstract class over an
+interface for a shared contract?
+Interview Tip: Choose abstract classes when you need to share actual
+implementation/logic across subclasses in addition to enforcing a contract
+-- interfaces alone can't provide default behavior.
+
+Q4. Can you instantiate an abstract class directly?
+Answer: No -- TypeScript errors at compile time if you try to `new` an
+abstract class directly; it must be subclassed and the subclass
+instantiated instead.
+Interview Tip: Quick, confident answer -- this is a common quick-fire
+question.
+
+Q5. What are the modern alternatives to enums that many teams prefer?
+Answer: A literal union type combined with an `as const` array (to keep a
+single source of truth for both the values and the derived type) is the
+most common modern alternative, giving similar developer ergonomics with
+full type erasure and no runtime object generation.
+Interview Tip: Tie back to the `as const` pattern from earlier -- shows a
+cohesive mental model of the type system across topics.
+
+TOPIC 43: MAPPED TYPES & CONDITIONAL TYPES
+--------------------------------------------------------------------------------
+
+Q1. What is a mapped type?
+Answer: A mapped type generates a new object type by iterating over the
+keys of an existing type (`keyof T`) and transforming each property's type
+or modifiers, forming the basis of utility types like `Partial`, `Required`,
+and `Readonly`.
+Simple Example: `type Nullable<T> = { [K in keyof T]: T[K] | null };`
+Follow-up Questions: How would you write a mapped type that makes every
+property BOTH optional and readonly?
+Interview Tip: `{ readonly [K in keyof T]?: T[K] }` -- practice writing
+mapped types from scratch, since this is a very common whiteboard exercise.
+
+Q2. How do you add or remove modifiers (`readonly`, `?`) in a mapped type?
+Answer: Prefix with `+` (default, adds the modifier) or `-` (removes it) --
+e.g., `-readonly` strips readonly, `-?` makes optional properties required.
+This is how utility types like `Required<T>` are implemented internally.
+Simple Example: `type Mutable<T> = { -readonly [K in keyof T]: T[K] };`
+Interview Tip: Know both the add and remove syntax -- interviewers often
+ask you to implement `Required` or a custom "Mutable" utility live.
+
+Q3. What is a conditional type?
+Answer: A conditional type selects between two types based on a type-level
+condition, written as `T extends U ? X : Y`, evaluated at compile time based
+on whether `T` is assignable to `U`. It enables type-level branching logic,
+used heavily in advanced utility types.
+Simple Example: `type IsString<T> = T extends string ? true : false;`
+Follow-up Questions: How is this similar to a ternary expression in regular
+JS?
+Interview Tip: The ternary analogy is the fastest way to explain this to a
+non-expert interviewer or when explaining your own code out loud.
+
+Q4. What does "distributive" mean for a conditional type over a union?
+Answer: When the checked type is a bare (unwrapped) generic type parameter,
+a conditional type automatically applies itself to each member of a union
+individually and combines the results back into a union, rather than
+checking the whole union at once. Wrapping the type in a tuple (`[T]`)
+disables this distributive behavior when you specifically want to check the
+whole union together.
+Simple Example: `type ToArray<T> = T extends any ? T[] : never;\ntype Result = ToArray<string | number>; // string[] | number[]`
+Follow-up Questions: How would you prevent distribution when you want to
+check the union as a single unit?
+Interview Tip: Mention wrapping both sides in tuples: `[T] extends [U] ? X : Y`
+-- this is a well-known, specific technique worth memorizing for senior
+interviews.
+
+Q5. What is the `infer` keyword used for?
+Answer: `infer` lets you extract and name a type from within a conditional
+type's structure, capturing a piece of a more complex type for reuse in the
+result branch. It's the mechanism behind utility types like `ReturnType`
+and `Awaited`.
+Simple Example: `type MyReturnType<T> = T extends (...args: any[]) => infer R ? R : never;`
+Follow-up Questions: Could you write a simplified version of `ReturnType`
+yourself using `infer`?
+Interview Tip: Practice writing this exact pattern -- it's one of the most
+common "implement a utility type" whiteboard exercises for senior roles.
+
+Q6. How would you write a mapped type that only includes properties of a
+specific value type?
+Answer: Combine a mapped type with a conditional type inside it, checking
+each property's type and mapping to `never` (then filtering with `as`
+remapping or `keyof`) for properties that don't match, extracting a subset
+of keys/properties by their value type.
+Simple Example: `type StringKeys<T> = { [K in keyof T]: T[K] extends string ? K : never }[keyof T];`
+Follow-up Questions: What does the trailing `[keyof T]` do at the end of
+that type?
+Interview Tip: Explain it collects all the resulting values (some real key
+names, some `never`) into a union, and `never` members effectively vanish
+from a union automatically -- a subtle but important behavior to understand.
+
+Q7. What are key remapping mapped types (`as` clause)?
+Answer: Introduced to let you rename keys during a mapped type
+transformation, e.g. prefixing every property name, often combined with
+template literal types for powerful key transformations like generating
+getter method names from property names.
+Simple Example: `type Getters<T> = { [K in keyof T as \`get\${string & K}\`]: () => T[K] };`
+Follow-up Questions: Where have you seen this pattern used in real
+libraries?
+Interview Tip: Mention form libraries or state management libraries that
+auto-generate typed getter/setter method names as a real-world example.
+
+Q8. How would you build a deeply recursive utility type, like a
+`DeepPartial<T>`?
+Answer: Use a mapped type combined with a conditional check -- for each
+property, if its type is itself an object, recursively apply the same
+utility; otherwise, apply the base transformation (like making it optional)
+directly.
+Simple Example: `type DeepPartial<T> = T extends object ? { [K in keyof T]?: DeepPartial<T[K]> } : T;`
+Follow-up Questions: What real-world use case would need deep partial
+typing (hint: deeply nested form/config updates)?
+Interview Tip: Mention deeply nested state update functions (like Redux
+Toolkit-style partial updates) as the classic real-world justification for
+this pattern.
+
+================================================================================
+END OF HANDBOOK
+================================================================================
