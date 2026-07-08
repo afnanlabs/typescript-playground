@@ -82,3 +82,148 @@ Constructor Parameter Properties (The Shorthand)
 Enums & Abstract Classes 
 Mapped Types & Conditional Types
 
+
+
+docs: complete TypeScript fundamentals interview handbook (1/6)
+docs: complete TypeScript type composition interview handbook (2/6)
+docs: complete TypeScript object modeling interview handbook (3/6)
+docs: complete TypeScript generics interview handbook (4/6)
+docs: complete TypeScript object-oriented programming interview handbook (5/6)
+docs: complete advanced TypeScript interview handbook (6/6)
+
+
+Commit 1 — Fundamentals
+git commit -m "docs: complete TypeScript fundamentals interview handbook"
+
+Topics:
+
+What is TypeScript
+Inference
+Primitives
+Special Types
+Objects
+Literals
+Assertions
+as const
+
+
+Commit 2 — Type Composition
+git commit -m "docs: complete TypeScript type composition interview handbook"
+
+Topics:
+
+Unions
+Intersections
+Arrays
+Readonly Arrays
+Tuples
+Parameter Annotations
+Optional & Default Parameters
+Rest Tuples
+Return Types
+
+
+Commit 3 — Object Modeling
+git commit -m "docs: complete TypeScript object modeling interview handbook"
+
+Topics:
+
+Interface Basics
+Type Aliases
+Interfaces vs Types
+Index Signatures
+typeof
+instanceof
+in
+Optional Chaining
+Nullish Coalescing
+
+
+Commit 4 — Generics
+git commit -m "docs: complete TypeScript generics interview handbook"
+
+Topics:
+
+Generics
+Generic Constraints
+keyof
+Utility Types
+Function Utility Types
+Union Helpers
+Awaited Utility
+
+
+Commit 5 — OOP
+git commit -m "docs: complete TypeScript object-oriented programming interview handbook"
+
+Topics:
+
+Classes
+Constructors
+Public / Private
+Protected
+Getters & Setters
+Constructor Parameter Properties
+Enums
+Abstract Classes
+
+
+Commit 6 — Advanced
+git commit -m "docs: complete advanced TypeScript interview handbook"
+
+Topics:
+
+Import & Export
+unknown
+Control Flow Narrowing
+Type Guards
+Async/Await & Promises
+Type Predicates
+Runtime Validation (Zod)
+Mapped Types
+Conditional Types
+
+
+
+docs: complete TypeScript fundamentals interview handbook (refs #1)
+docs: complete TypeScript type composition interview handbook (refs #1)
+docs: complete TypeScript object modeling interview handbook (refs #1)
+docs: complete TypeScript generics interview handbook (refs #1)
+docs: complete TypeScript object-oriented programming interview handbook (refs #1)
+docs: complete advanced TypeScript interview handbook (closes #1)
+
+
+
+
+TOPIC 1: WHAT IS TYPESCRIPT
+--------------------------------------------------------------------------------
+
+Q1. What is TypeScript and why would you use it over plain JavaScript?
+Answer: TypeScript is a superset of JavaScript that adds static typing. It compiles
+down to plain JS, so it runs anywhere JS runs. The main value is catching type
+errors at compile time instead of runtime, better editor autocomplete, safer
+refactors, and self-documenting code through types. It doesn't add new runtime
+behavior -- it's purely a development-time tool that gets erased during compilation.
+Follow-up Questions: Does TypeScript improve runtime performance? Can TypeScript
+catch every bug?
+Interview Tip: Emphasize "compile-time safety, zero runtime cost" -- interviewers
+want to hear that you understand types are erased, not enforced at runtime.
+
+Q2. Is TypeScript compiled or interpreted?
+Answer: TypeScript is transpiled to JavaScript using the TypeScript compiler (tsc)
+or a tool like esbuild/swc, and the resulting JS is what actually runs in the
+browser or Node. TypeScript itself has no runtime -- there's no "TS engine."
+Type information is stripped away entirely at build time.
+Follow-up Questions: What happens if you try to check a TS-only type at runtime?
+Interview Tip: Mention this is why you can't do `if (x instanceof SomeInterface)`
+-- interfaces don't exist after compilation.
+
+Q3. What problems does TypeScript NOT solve?
+Answer: TypeScript doesn't prevent runtime errors from bad data (like malformed
+API responses), doesn't enforce types across a network boundary, doesn't improve
+performance, and can be bypassed with `any` or type assertions. It's a tool for
+catching mistakes early in development, not a guarantee of correctness.
+Follow-up Questions: How would you validate data coming from an external API?
+Interview Tip: This is a great place to segue into mentioning Zod or runtime
+validation if asked -- shows you understand the type-safety boundary.
+
